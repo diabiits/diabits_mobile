@@ -9,6 +9,7 @@ import 'data/health_connect/sync_scheduler.dart';
 import 'data/network/api_client.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
 
   runApp(
