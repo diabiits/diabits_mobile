@@ -1,7 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'data/auth/token_storage.dart';
+import 'data/health_connect/health_connect_sync.dart';
+import 'data/health_connect/permission_handler.dart';
+import 'data/health_connect/sync_scheduler.dart';
+import 'data/network/api_client.dart';
+
+void main() async {
+  await dotenv.load();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        /// Provides a singleton instance of TokenStorage for secure token handling.
+        Provider<TokenStorage>(create: (_) => TokenStorage()),
+
+        /// Provides the ApiClient, making it dependent on TokenStorage.
+        Provider<ApiClient>(
+          create: (context) => ApiClient(tokens: context.read<TokenStorage>()),
+        ),
+
+        /// Provides the PermissionHandler for Health Connect permissions.
+        Provider<PermissionHandler>(create: (_) => PermissionHandler()),
+
+        /// Provides the HealthConnectSync service for data synchronization.
+        Provider<HealthConnectSync>(
+          create: (context) => HealthConnectSync(
+            client: context.read<ApiClient>(),
+            permissions: context.read<PermissionHandler>(),
+          ),
+        ),
+
+        /// Provides the SyncScheduler for managing background sync tasks.
+        Provider<SyncScheduler>(create: (_) => SyncScheduler()),
+      ],
+      child: const MyApp(),
+
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -11,7 +49,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Diabits',
       theme: ThemeData(
         // This is the theme of your application.
         //
