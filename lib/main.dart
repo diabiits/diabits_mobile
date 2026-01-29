@@ -20,6 +20,7 @@ void main() async {
         /// Provides the ApiClient, making it dependent on TokenStorage.
         Provider<ApiClient>(
           create: (context) => ApiClient(tokens: context.read<TokenStorage>()),
+          dispose: (_, client) => client.dispose(),
         ),
 
         /// Provides the PermissionHandler for Health Connect permissions.

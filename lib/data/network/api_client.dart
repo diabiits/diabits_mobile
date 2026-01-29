@@ -9,30 +9,29 @@ import '../auth/dtos/auth_response.dart';
 import '../auth/token_storage.dart';
 import 'endpoints.dart';
 
+//TODO  bool _ownsClient;?
 /// A centralized HTTP client for making API requests.
 ///
 /// This class wraps the [http] package to provide a unified interface for
 /// all backend communication. It automatically handles adding the authorization
 /// header and refreshing expired access tokens.
 class ApiClient {
-  final http.Client _httpClient = http.Client();
   final TokenStorage _tokens;
+  final http.Client _httpClient;
   final String _baseUrl = dotenv.env['BASE_URL']!;
 
   /// Creates a new instance of [ApiClient].
   ///
   /// It requires a [TokenStorage] instance to manage authentication tokens.
-  ApiClient({required TokenStorage tokens}) : _tokens = tokens;
+  ApiClient({required TokenStorage tokens, http.Client? httpClient})
+    : _tokens = tokens,
+      _httpClient = httpClient ?? http.Client();
 
   /// Sends a POST request to the specified path with an optional body.
   Future<http.Response> post(String path, Object? body) async {
     return _sendRequest((headers) {
       final url = Uri.parse('$_baseUrl$path');
-      return _httpClient.post(
-        url,
-        headers: headers,
-        body: jsonEncode(body),
-      );
+      return _httpClient.post(url, headers: headers, body: jsonEncode(body));
     });
   }
 
@@ -40,11 +39,7 @@ class ApiClient {
   Future<http.Response> put(String path, Object? body) async {
     return _sendRequest((headers) {
       final url = Uri.parse('$_baseUrl$path');
-      return _httpClient.put(
-        url,
-        headers: headers,
-        body: jsonEncode(body),
-      );
+      return _httpClient.put(url, headers: headers, body: jsonEncode(body));
     });
   }
 
@@ -82,8 +77,8 @@ class ApiClient {
   /// response is received, it attempts to refresh the token and retry the request.
   /// If the refresh fails, it broadcasts a global logout event.
   Future<http.Response> _sendRequest(
-      Future<http.Response> Function(Map<String, String> headers) makeRequest,
-      ) async {
+    Future<http.Response> Function(Map<String, String> headers) makeRequest,
+  ) async {
     final headers = await _buildHeaders();
     var response = await makeRequest(headers);
 
@@ -139,4 +134,6 @@ class ApiClient {
     }
     return headers;
   }
+
+  void dispose() => _httpClient.close();
 }
