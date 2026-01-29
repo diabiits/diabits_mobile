@@ -1,18 +1,19 @@
 import 'dart:async';
 
 //TODO Use more instead of bubbling http status all the way to ui?
+//TODO Remove?
 /// A simple event bus for broadcasting and listening to authentication-related events.
 ///
 /// This allows different parts of the app to communicate about authentication state
 /// changes without being directly coupled.
-class AuthEvents {
-  final _streamController = StreamController<AuthEvent>.broadcast();
+class TokenEvents {
+  final _streamController = StreamController<TokenEvent>.broadcast();
 
   /// The stream of authentication events.
-  Stream<AuthEvent> get stream => _streamController.stream;
+  Stream<TokenEvent> get stream => _streamController.stream;
 
   /// Adds a new authentication event to the stream.
-  void add(AuthEvent event) {
+  void add(TokenEvent event) {
     _streamController.add(event);
   }
 
@@ -23,10 +24,11 @@ class AuthEvents {
 }
 
 /// An enum representing the different types of authentication events.
-enum AuthEvent {
+enum TokenEvent {
   /// An event that signals that the user should be logged out.
-  logout,
+  unauthorized,
+  serverUnavailable
 }
 
-/// A global singleton instance of the [AuthEvents] class.
-final authEvents = AuthEvents();
+/// A global singleton instance of the [TokenEvents] class.
+final tokenEvents = TokenEvents();

@@ -12,6 +12,15 @@ class Endpoints {
   static const lastSync = "/User/lastSync";
 
   // Authentication Endpoints
+  /// Endpoint for user login.
+  static const login = "/Auth/login";
+
+  /// Endpoint for user registration.
+  static const register = "/Auth/register";
+
+  /// Endpoint for user logout.
+  static const logout = "/Auth/logout";
+
   /// Endpoint for validating the current access token.
   static const checkToken = "/Auth/checkToken";
 

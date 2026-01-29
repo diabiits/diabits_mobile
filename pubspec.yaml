@@ -37,6 +37,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   http: ^1.6.0
   workmanager: ^0.9.0+3
+  lottie: ^3.3.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -71,6 +72,9 @@ flutter:
 
   assets:
     - .env
+    - assets/loading_icon.json
+    - assets/launcher_icon.png
+    - assets/wordmark_red.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
