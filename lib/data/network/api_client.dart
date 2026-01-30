@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
-import '../../domain/auth/token_events.dart';
+import '../../domain/auth/auth_event_broadcaster.dart';
 import '../auth/dtos/auth_response.dart';
 import '../auth/token_storage.dart';
+import 'dtos/api_result.dart';
 import 'endpoints.dart';
 
 /// Handles all HTTP requests and manages authentication (access + refresh tokens).
@@ -18,7 +20,7 @@ class ApiClient {
     : _tokens = tokens,
       _httpClient = httpClient ?? http.Client();
 
-  Future<http.Response> get(String path, {Map<String, String>? params}) {
+  Future<ApiResult> get(String path, {Map<String, String>? params}) {
     return _performRequest(() async {
       final headers = await _buildHeaders();
       final uri = _buildUri(path, params);
@@ -26,7 +28,7 @@ class ApiClient {
     });
   }
 
-  Future<http.Response> post(String path, Object? body) {
+  Future<ApiResult> post(String path, Object? body) {
     return _performRequest(() async {
       final headers = await _buildHeaders();
       final uri = _buildUri(path);
@@ -34,7 +36,7 @@ class ApiClient {
     });
   }
 
-  Future<http.Response> put(String path, Object? body) {
+  Future<ApiResult> put(String path, Object? body) {
     return _performRequest(() async {
       final headers = await _buildHeaders();
       final uri = _buildUri(path);
@@ -42,7 +44,7 @@ class ApiClient {
     });
   }
 
-  Future<http.Response> delete(String path) {
+  Future<ApiResult> delete(String path) {
     return _performRequest(() async {
       final headers = await _buildHeaders();
       final uri = _buildUri(path);
@@ -50,50 +52,53 @@ class ApiClient {
     });
   }
 
-  Future<http.Response> _performRequest(
+  Future<ApiResult> _performRequest(
     Future<http.Response> Function() request,
   ) async {
     http.Response response;
 
     try {
       response = await request();
-    } catch (_) {
-      return _buildError(503, "Service unavailable");
+    } on SocketException catch (_) {
+      authEvents.add(AuthEvent.serverUnavailable);
+      return ApiResult(success: false, message: "Server unavailable");
     }
 
     if (response.statusCode == 401) {
-      final refreshResult = await _refreshAccessToken();
+      final refreshStatus = await _refreshAccessToken();
 
-      if (refreshResult.statusCode == 200) {
-        // Retry — request() uses fresh access automatically
+      if (refreshStatus == 200) {
         try {
-          response = await request();
-        } catch (_) {
-          return _buildError(503, "Service unavailable");
+          response = await request().timeout(const Duration(seconds: 15));
+        } on TimeoutException catch (_) {
+          authEvents.add(AuthEvent.serverUnavailable);
+          return ApiResult(success: false, message: "Server unavailable");
         }
       } else {
-        tokenEvents.add(TokenEvent.unauthorized);
+        authEvents.add(AuthEvent.loginNeeded);
+        return ApiResult(
+          success: false,
+          message: "Tokens expired, please log in again",
+          response: response,
+        );
       }
+    } else if (response.statusCode == 400) {
+      return ApiResult(
+        success: false,
+        message: "Bad request", //TODO Refactor
+        response: response,
+      );
     }
 
-    if (response.statusCode >= 500) {
-      tokenEvents.add(TokenEvent.serverUnavailable);
-    }
-
-    return response;
+    return ApiResult(success: true, response: response);
   }
 
-  // ───────────────────────────
-  // Token handling
-  // ───────────────────────────
-
+  //TODO Refactor
   /// Attempts to refresh the access token using the stored refresh token.
-  Future<http.Response> _refreshAccessToken() async {
+  Future<int> _refreshAccessToken() async {
     final refreshToken = await _tokens.getRefreshToken();
 
-    if (refreshToken == null) {
-      return _buildError(401, "No refresh token available");
-    }
+    if (refreshToken == null) return 401;
 
     try {
       final response = await _httpClient.post(
@@ -110,15 +115,11 @@ class ApiClient {
         await _tokens.saveRefreshToken(auth.refreshToken);
       }
 
-      return response;
+      return 200;
     } catch (_) {
-      return _buildError(503, "Service unavailable");
+      return 503;
     }
   }
-
-  // ───────────────────────────
-  // Helpers
-  // ───────────────────────────
 
   /// Builds the full URL with optional query parameters.
   Uri _buildUri(String path, [Map<String, String>? params]) {
@@ -150,7 +151,6 @@ class ApiClient {
     );
   }
 
-  /// Call this when you’re done using the client.
   void dispose() {
     _httpClient.close();
   }

@@ -1,4 +1,6 @@
+import 'package:diabits_mobile/domain/auth/auth_event_broadcaster.dart';
 import 'package:diabits_mobile/ui/auth/login_screen.dart';
+import 'package:diabits_mobile/ui/shared/error_snack_listener.dart';
 import 'package:diabits_mobile/ui/shared/loading_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,19 +17,29 @@ class AuthGate extends StatelessWidget {
 
   /// Builds the widget tree based on the current authentication state.
   /// - [AuthState.none]: Shows a custom loading screen while the app is initializing.
-  /// - [AuthState.loginRequired]: Shows the login screen.
+  /// - [AuthState.unauthenticated]: Shows the login screen.
   /// - [AuthState.authenticated]: Shows the main manual input screen.
   @override
   Widget build(BuildContext context) {
     /// uses context.select to only rebuild the widget if the authState changes
     /// instead of using context.watch which would rebuild the widget every
     /// time AuthStateManager is updated
+
+    String errorMessage = "test";
     final authState = context.select((AuthStateManager as) => as.authState);
+    authEvents.stream.listen((event) {
+      if (event == AuthEvent.loginNeeded) {
+        errorMessage = "Login needed";
+      }
+      else if (event == AuthEvent.serverUnavailable) {
+        errorMessage = "Server unavailable";
+      }
+    });
 
     switch (authState) {
       case .none:
         return const LoadingScreen();
-      case .loginRequired:
+      case .unauthenticated:
         return const LoginScreen();
       case .authenticated:
         return const Scaffold();

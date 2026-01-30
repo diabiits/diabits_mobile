@@ -1,12 +1,10 @@
 import 'dart:async';
 
 import 'package:diabits_mobile/data/health_connect/sync_scheduler.dart';
-import 'package:diabits_mobile/domain/auth/token_events.dart';
+import 'package:diabits_mobile/domain/auth/auth_event_broadcaster.dart';
 import 'package:flutter/material.dart';
 
 import 'package:diabits_mobile/data/auth/auth_repository.dart';
-import 'package:diabits_mobile/data/auth/dtos/login_request.dart';
-import 'package:diabits_mobile/data/auth/dtos/register_request.dart';
 
 /// Manages the authentication state of the application.
 ///
@@ -17,27 +15,24 @@ import 'package:diabits_mobile/data/auth/dtos/register_request.dart';
 class AuthStateManager extends ChangeNotifier {
   final AuthRepository _authRepo;
   final SyncScheduler _syncScheduler;
-  late final StreamSubscription<TokenEvent> _tokenEventSubscription;
+  late final StreamSubscription<AuthEvent> _authEventSubscription;
 
   /// Creates a new instance of [AuthStateManager].
-  ///
-  /// It requires an [AuthRepository] for backend communication and a [SyncScheduler]
-  /// to start synchronizations of Health Connect data when the user is authenticated.
+  /// Persistent authentication state that decides navigation.
   AuthStateManager({
     required AuthRepository authRepo,
     required SyncScheduler syncCoordinator,
   }) : _authRepo = authRepo,
        _syncScheduler = syncCoordinator {
-    _tokenEventSubscription = tokenEvents.stream.listen((event) {
-      if (event == TokenEvent.unauthorized) {
+    _authEventSubscription = authEvents.stream.listen((event) {
+      if (event == AuthEvent.loginNeeded) {
         logout();
-        //TODO Add snackbar with explanation as to why user was logged out
       }
     });
   }
 
   /// The current authentication state of the app. Defaults to [AuthState.none].
-  AuthState _authState = AuthState.none;
+  AuthState _authState = .none;
   AuthState get authState => _authState;
 
   /// Initializes the authentication state when the app starts.
@@ -52,7 +47,7 @@ class AuthStateManager extends ChangeNotifier {
       notifyListeners();
 
       /// Try validating tokens with backend
-      final validAuthState = await _authRepo.tryAutoLogin();
+      final validAuthState = await _authRepo.autoLogin();
 
       if (validAuthState == AuthState.authenticated) {
         await _syncScheduler.startBackgroundSync();
@@ -60,72 +55,42 @@ class AuthStateManager extends ChangeNotifier {
         _authState = validAuthState;
       }
     } else {
-      _authState = AuthState.loginRequired;
+      _authState = AuthState.unauthenticated;
     }
 
     notifyListeners();
   }
 
-  /// Registers a new user.
-  ///
-  /// It takes the user's credentials, sends them to the repository, and if
-  /// successful, it updates the auth state and starts the background sync.
-  /// Returns an error message if registration fails.
-  Future<String?> register(
-    String username,
-    String password,
-    String email,
-    String inviteCode,
-  ) async {
-    final request = RegisterRequest(
-      username: username,
-      password: password,
-      email: email,
-      inviteCode: inviteCode,
-    );
 
-    final (success, message) = await _authRepo.register(request);
-
-    if (!success) return message;
-
+  Future<void> markAuthenticated() async {
     _authState = AuthState.authenticated;
     notifyListeners();
-
     await _syncScheduler.startBackgroundSync();
-
-    return null;
   }
 
-  /// Logs in a user.
-  ///
-  /// It takes the user's credentials, sends them to the repository, and if
-  /// successful, it updates the auth state and starts the background sync.
-  /// Returns an error message if login fails.
-  Future<String?> login(String username, String password) async {
-    final request = LoginRequest(username: username, password: password);
-
-    final (success, message) = await _authRepo.login(request);
-
-    if (!success) return message;
-
-    _authState = AuthState.authenticated;
+  Future<void> markUnauthenticated() async {
+    _authState = AuthState.unauthenticated;
     notifyListeners();
-    await _syncScheduler.startBackgroundSync();
-
-    return null;
+    await _syncScheduler.stopBackgroundSync();
   }
 
   /// Logs out the current user.
   ///
   /// It clears the local tokens, stops the background sync, and updates the
   /// auth state to require login.
-  Future<void> logout() async {
-    await _authRepo.logout();
-    _authState = AuthState.loginRequired;
-    await _syncScheduler.stopBackgroundSync();
-    notifyListeners();
+  // Future<void> logout() async {
+  //   await _authRepo.logout();
+  //   _authState = AuthState.unauthenticated;
+  //   await _syncScheduler.stopBackgroundSync();
+  //   notifyListeners();
+  // }
+
+  @override
+  void dispose() {
+    _authEventSubscription.cancel();
+    super.dispose();
   }
 }
 
 /// An enum representing the different authentication states of the app.
-enum AuthState { none, loginRequired, authenticated }
+enum AuthState { none, unauthenticated, authenticated }

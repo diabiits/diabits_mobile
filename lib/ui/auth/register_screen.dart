@@ -1,4 +1,3 @@
-import 'package:diabits_mobile/ui/shared/error_snack_listener.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/auth/field_validators.dart';
@@ -36,125 +35,132 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Consumer<RegisterViewModel>(
-        builder: (context, vm, _) => ErrorSnackListener(
-          errorMessage: vm.errorMessage,
-          onClear: vm.clearError,
-          child: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: _formKey,
-                  autovalidateMode: .onUnfocus,
-                  child: Column(
-                    mainAxisSize: .min,
-                    crossAxisAlignment: .stretch,
-                    children: [
-                      Hero(
-                        tag: 'logo',
-                        child: Image.asset(
-                          'assets/wordmark_red.png',
-                          height: 70,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+        builder: (context, vm, _) {
+          if (vm.snackMessage != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(vm.snackMessage!)));
+              vm.clearSnack();
+            });
+          }
 
-                      /// Title
-                      Text(
-                        'Create Account',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                        textAlign: .center,
+          return SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                autovalidateMode: .onUnfocus,
+                child: Column(
+                  mainAxisSize: .min,
+                  crossAxisAlignment: .stretch,
+                  children: [
+                    Hero(
+                      tag: 'logo',
+                      child: Image.asset(
+                        'assets/wordmark_red.png',
+                        height: 70,
                       ),
-                      const SizedBox(height: 32),
+                    ),
+                    const SizedBox(height: 8),
 
-                      /// Username
-                      TextFormField(
-                        controller: _usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Username',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: FieldValidators.requiredValidator,
-                        autofillHints: const [AutofillHints.username],
-                        textInputAction: .next,
+                    /// Title
+                    Text(
+                      'Create Account',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                      textAlign: .center,
+                    ),
+                    const SizedBox(height: 32),
+
+                    /// Username
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        border: OutlineInputBorder(),
                       ),
-                      const SizedBox(height: 16),
+                      validator: FieldValidators.requiredValidator,
+                      autofillHints: const [AutofillHints.username],
+                      textInputAction: .next,
+                    ),
+                    const SizedBox(height: 16),
 
-                      /// Password
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: vm.passwordHidden,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              vm.passwordHidden
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                            ),
-                            onPressed: vm.togglePasswordVisibility,
+                    /// Password
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: vm.passwordHidden,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            vm.passwordHidden
+                                ? Icons.visibility
+                                : Icons.visibility_off,
                           ),
+                          onPressed: vm.togglePasswordVisibility,
                         ),
-                        validator: FieldValidators.passwordValidator,
-                        autofillHints: const [AutofillHints.newPassword],
-                        textInputAction: .next,
-                        onChanged: (_) => vm.clearError(),
                       ),
-                      const SizedBox(height: 16),
+                      validator: FieldValidators.passwordValidator,
+                      autofillHints: const [AutofillHints.newPassword],
+                      textInputAction: .next,
+                      onChanged: (_) => vm.clearSnack(),
+                    ),
+                    const SizedBox(height: 16),
 
-                      /// Email
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: FieldValidators.requiredValidator,
-                        autofillHints: const [AutofillHints.email],
-                        keyboardType: .emailAddress,
-                        textInputAction: .next,
-                        onChanged: (_) => vm.clearError(),
+                    /// Email
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(),
                       ),
-                      const SizedBox(height: 16),
+                      validator: FieldValidators.requiredValidator,
+                      autofillHints: const [AutofillHints.email],
+                      keyboardType: .emailAddress,
+                      textInputAction: .next,
+                      onChanged: (_) => vm.clearSnack(),
+                    ),
+                    const SizedBox(height: 16),
 
-                      /// Invite Code
-                      TextFormField(
-                        controller: _inviteCodeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Invite Code',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: FieldValidators.requiredValidator,
-                        textInputAction: .done,
-                        onFieldSubmitted: (_) => _submit(vm),
-                        onChanged: (_) => vm.clearError(),
+                    /// Invite Code
+                    TextFormField(
+                      controller: _inviteCodeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Invite Code',
+                        border: OutlineInputBorder(),
                       ),
-                      const SizedBox(height: 24),
+                      validator: FieldValidators.requiredValidator,
+                      textInputAction: .done,
+                      onFieldSubmitted: (_) => _submit(vm),
+                      onChanged: (_) => vm.clearSnack(),
+                    ),
+                    const SizedBox(height: 24),
 
-                      /// Register button
-                      AnimatedButton(
-                        onPressed: vm.isLoading ? null : () => _submit(vm),
-                        isLoading: vm.isLoading,
-                        text: 'Register',
-                      ),
+                    /// Register button
+                    AnimatedButton(
+                      onPressed: vm.isLoading ? null : () => _submit(vm),
+                      isLoading: vm.isLoading,
+                      text: 'Register',
+                    ),
 
-                      const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                      /// Back to Login button
-                      TextButton(
-                        onPressed: vm.isLoading
-                            ? null
-                            : () => Navigator.pop(context),
-                        child: const Text('Back to Login'),
-                      ),
-                    ],
-                  ),
+                    /// Back to Login button
+                    TextButton(
+                      onPressed: vm.isLoading
+                          ? null
+                          : () => Navigator.pop(context),
+                      child: const Text('Back to Login'),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        ),
+        );
+        },
       ),
     );
   }

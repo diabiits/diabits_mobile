@@ -70,9 +70,9 @@ class HealthConnectSync {
   Future<bool> _sendToBackend(List<HealthDataPoint> data) async {
     final batch = _convertToRequest(data);
 
-    var response = await _client.post(Endpoints.healthConnect, batch.toJson());
+    var result = await _client.post(Endpoints.healthConnect, batch.toJson());
 
-    return response.statusCode == 200;
+    return result.response.statusCode == 200;
   }
 
   /// Determines the time range for the sync based on the last successful sync time.

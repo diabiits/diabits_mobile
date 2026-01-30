@@ -1,3 +1,4 @@
+import 'package:diabits_mobile/ui/auth/auth_event_listener.dart';
 import 'package:flutter/material.dart';
 
 import 'ui/auth/auth_gate.dart';
@@ -15,16 +16,18 @@ class DiabitsApp extends StatelessWidget {
   /// [AuthGate] as the home widget.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Diabits',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFef88ad),
-          brightness: Brightness.light,
+    return AuthEventListener(
+      child: MaterialApp(
+        title: 'Diabits',
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFef88ad),
+            brightness: Brightness.light,
+          ),
         ),
+        home: const AuthGate(),
       ),
-      home: const AuthGate(),
     );
   }
 }

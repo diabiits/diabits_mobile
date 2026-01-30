@@ -10,6 +10,14 @@ import 'dtos/login_request.dart';
 import 'dtos/register_request.dart';
 import 'token_storage.dart';
 
+class Response {
+  final bool success;
+  final String? message;
+
+  Response(this.success, this.message);
+}
+
+
 /// A repository for handling authentication-related operations.
 ///
 /// This class communicates with the backend to perform user registration, login,
@@ -19,32 +27,29 @@ class AuthRepository {
   final ApiClient _client;
 
   /// Creates a new instance of [AuthRepository].
-  ///
-  /// It requires a [TokenStorage] instance to manage authentication tokens and
-  /// an [ApiClient] to make network requests.
   AuthRepository({required TokenStorage tokens, required ApiClient client})
-      : _tokens = tokens,
-        _client = client;
+    : _tokens = tokens,
+      _client = client;
 
   /// Registers a new user with the backend.
   ///
   /// It sends the user's registration details and, upon success, saves the
   /// returned authentication tokens. Returns a tuple with the registration
   /// status and an optional error message.
-  Future<(bool status, String? message)> register(
-      RegisterRequest request,
-      ) async {
-    var response = await _client.post(Endpoints.register, request.toJson());
+  Future<Response> register(
+    RegisterRequest request,
+  ) async {
+    var result = await _client.post(Endpoints.register, request.toJson());
 
-    if (response.statusCode == 503 || response.statusCode == 400) {
-      var body = jsonDecode(response.body);
-      return (false, body["message"].toString());
-    }
-    if (response.statusCode != 201) {
-      return (false, "Unknown error");
+    if (!result.success) {
+      if (result.response!.statusCode == 400) {
+        final body = jsonDecode(result.response!.body);
+        return Response(false, body["message"].toString());
+      }
+      return Response(false, null);
     }
 
-    final json = jsonDecode(response.body);
+    final json = jsonDecode(result.response!.body);
     final authResponse = AuthResponse.fromJson(json);
 
     await _tokens.saveAccessToken(authResponse.accessToken);
@@ -59,25 +64,15 @@ class AuthRepository {
   /// authentication tokens. Returns a tuple with the login status and an
   /// optional error message.
   Future<(bool success, String? message)> login(LoginRequest request) async {
-    final response = await _client
-        .post(Endpoints.login, request.toJson())
-        .timeout(
-      const Duration(seconds: 10),
-      onTimeout: () =>
-          http.Response("Server unavailable. Try again later.", 503),
-    );
+    final result = await _client.post(Endpoints.login, request.toJson());
 
-    if (response.statusCode == 400) {
-      var body = jsonDecode(response.body);
-      return (false, body["message"].toString());
-    } else if (response.statusCode == 503) {
-      return (false, response.body.toString());
-    }
-    if (response.statusCode != 200) {
-      return (false, "Unknown error");
+    if (!result.success) {
+      return result.response?.statusCode == 400
+          ? (false, "Invalid credentials")
+          : (false, null);
     }
 
-    final json = jsonDecode(response.body);
+    final json = jsonDecode(result.response!.body);
     final authResponse = AuthResponse.fromJson(json);
 
     await _tokens.saveAccessToken(authResponse.accessToken);
@@ -103,13 +98,13 @@ class AuthRepository {
   ///
   /// It sends a request to a protected endpoint to check if the current access
   /// token is valid. Returns the appropriate [AuthState] based on the response.
-  Future<AuthState> tryAutoLogin() async {
+  Future<AuthState> autoLogin() async {
     final response = await _client.get(Endpoints.checkToken);
 
     if (response.statusCode == 200) {
       return AuthState.authenticated;
     } else {
-      return AuthState.loginRequired;
+      return AuthState.unauthenticated;
     }
   }
 

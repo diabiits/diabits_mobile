@@ -57,22 +57,28 @@ void main() async {
           create: (context) => AuthStateManager(
             authRepo: context.read<AuthRepository>(),
             syncCoordinator: context.read<SyncScheduler>(),
-          )..tryAutoLogin(), /// Immediately attempts to log in the user automatically.
+          )..tryAutoLogin(),
+
+          /// Immediately attempts to log in the user automatically.
         ),
 
         /// Provides the LoginViewModel for the login screen.
         ChangeNotifierProvider<LoginViewModel>(
-          create: (context) =>
-              LoginViewModel(authManager: context.read<AuthStateManager>()),
+          create: (context) => LoginViewModel(
+            authManager: context.read<AuthStateManager>(),
+            authRepo: context.read<AuthRepository>(),
+          ),
         ),
 
         /// Provides the RegisterViewModel for the registration screen.
         ChangeNotifierProvider<RegisterViewModel>(
-          create: (context) =>
-              RegisterViewModel(authManager: context.read<AuthStateManager>()),
+          create: (context) => RegisterViewModel(
+            authManager: context.read<AuthStateManager>(),
+            authRepo: context.read<AuthRepository>(),
+          ),
         ),
-
       ],
+
       /// The root widget of the application.
       child: const DiabitsApp(),
     ),

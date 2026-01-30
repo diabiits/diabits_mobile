@@ -29,10 +29,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Consumer<LoginViewModel>(
-        builder: (context, vm, _) => ErrorSnackListener(
-          errorMessage: vm.errorMessage,
-          onClear: vm.clearError,
-          child: SafeArea(
+        builder: (context, vm, _) {
+          if (vm.snackMessage != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(vm.snackMessage!)));
+              vm.clearSnack();
+            });
+          }
+          return SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
@@ -68,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         validator: FieldValidators.requiredValidator,
                         autofillHints: const [AutofillHints.username],
                         textInputAction: .next,
-                        onChanged: (_) => vm.clearError(),
+                        onChanged: (_) => vm.clearSnack(), //TODO Necessary?
                       ),
                       const SizedBox(height: 16),
 
@@ -92,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         autofillHints: const [AutofillHints.password],
                         textInputAction: .done,
                         onFieldSubmitted: (_) => _submit(vm),
-                        onChanged: (_) => vm.clearError(),
+                        onChanged: (_) => vm.clearSnack(),  //TODO Necessary?
                       ),
                       const SizedBox(height: 24),
 
@@ -123,8 +129,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
