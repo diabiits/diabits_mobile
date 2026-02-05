@@ -1,6 +1,5 @@
 import 'package:diabits_mobile/ui/auth/register_screen.dart';
-import 'package:diabits_mobile/ui/shared/animated_button.dart';
-import 'package:diabits_mobile/ui/shared/error_snack_listener.dart';
+import 'package:diabits_mobile/ui/shared/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -60,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       Text(
                         'Connecting the Dots',
-                        style: Theme.of(context).textTheme.labelLarge,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 32),
 
@@ -68,13 +67,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextFormField(
                         controller: _usernameController,
                         decoration: const InputDecoration(
-                          labelText: 'Username',
-                          border: OutlineInputBorder(),
+                          labelText: 'Username'
                         ),
                         validator: FieldValidators.requiredValidator,
                         autofillHints: const [AutofillHints.username],
                         textInputAction: .next,
-                        onChanged: (_) => vm.clearSnack(), //TODO Necessary?
+                        onChanged: (_) => vm.clearSnack(),
                       ),
                       const SizedBox(height: 16),
 
@@ -84,7 +82,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: vm.passwordHidden,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          border: const OutlineInputBorder(),
                           suffixIcon: IconButton(
                             icon: Icon(
                               vm.passwordHidden
@@ -98,12 +95,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         autofillHints: const [AutofillHints.password],
                         textInputAction: .done,
                         onFieldSubmitted: (_) => _submit(vm),
-                        onChanged: (_) => vm.clearSnack(),  //TODO Necessary?
+                        onChanged: (_) => vm.clearSnack(),
                       ),
                       const SizedBox(height: 24),
 
                       /// Login Button
-                      AnimatedButton(
+                      PrimaryButton(
                         onPressed: vm.isLoading ? null : () => _submit(vm),
                         isLoading: vm.isLoading,
                         text: 'Login',
@@ -122,7 +119,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 );
                               },
-                        child: const Text("Create new account"),
+                        child: Row(
+                          mainAxisSize: .min,
+                          children: [
+                            const Text("Create new account"),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward, size: 18),
+                          ],
+                        ),
                       ),
                     ],
                   ),

@@ -1,6 +1,4 @@
-import 'package:diabits_mobile/domain/auth/auth_event_broadcaster.dart';
 import 'package:diabits_mobile/ui/auth/login_screen.dart';
-import 'package:diabits_mobile/ui/shared/error_snack_listener.dart';
 import 'package:diabits_mobile/ui/shared/loading_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,7 +27,7 @@ class AuthGate extends StatelessWidget {
       case .unauthenticated:
         return const LoginScreen();
       case .authenticated:
-        return const Scaffold();
+        return const  Scaffold();
     }
   }
 }

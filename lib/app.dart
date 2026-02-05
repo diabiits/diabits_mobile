@@ -3,31 +3,68 @@ import 'package:flutter/material.dart';
 
 import 'ui/auth/auth_gate.dart';
 
-/// The root widget of the Diabits application.
-///
-/// This widget sets up the [MaterialApp], including the app's title, theme,
-/// and the initial route, which is the [AuthGate].
 class DiabitsApp extends StatelessWidget {
   const DiabitsApp({super.key});
 
-  /// Builds the UI for the application.
-  ///
-  /// It configures the [MaterialApp] with a custom theme and sets the
-  /// [AuthGate] as the home widget.
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color(0xFFAC0000);
+    const secondaryColor = Color(0xFFEF88AD);
+    const ternaryColor = Color(0xFF700507);
+    const charcoal = Color(0xFF333333);
+
     return MaterialApp(
       title: 'Diabits',
       theme: ThemeData(
         useMaterial3: true,
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: secondaryColor,
+          selectionHandleColor: secondaryColor,
+          selectionColor: Color(0x4DEF88AD),
+        ),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFef88ad),
+          seedColor: primaryColor,
+          primary: primaryColor,
+          onPrimary: Colors.white,
+          secondary: secondaryColor,
+          outline: Colors.grey[400],
+          surface: Colors.white,
           brightness: Brightness.light,
         ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[50],
+          labelStyle: const TextStyle(color: charcoal),
+          floatingLabelStyle: const TextStyle(color: charcoal),
+
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: charcoal, width: 1.5),
+          ),
+
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            elevation: 2,
+            backgroundColor: primaryColor,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            minimumSize: const Size.fromHeight(50),
+          ),
+        ),
+        snackBarTheme: SnackBarThemeData(backgroundColor: ternaryColor),
       ),
-      builder: (context, child) {
-        return AuthEventListener(child: child!);
-      },
+      builder: (context, child) => AuthEventListener(child: child!),
       home: const AuthGate(),
     );
   }

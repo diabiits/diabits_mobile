@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -12,54 +11,62 @@ import 'endpoints.dart';
 
 /// Handles all HTTP requests and manages authentication (access + refresh tokens).
 class ApiClient {
+  static const Duration _defaultTimeout = Duration(seconds: 10);
+  final String _baseUrl = dotenv.env['BASE_URL']!;
+
   final TokenStorage _tokens;
   final http.Client _httpClient;
-  final String _baseUrl = dotenv.env['BASE_URL']!;
 
   ApiClient({required TokenStorage tokens, http.Client? httpClient})
     : _tokens = tokens,
       _httpClient = httpClient ?? http.Client();
 
   Future<ApiResult> get(String path, {Map<String, String>? params}) {
-    return _performRequest(() async {
-      final headers = await _buildHeaders();
-      final uri = _buildUri(path, params);
-      return _httpClient.get(uri, headers: headers);
-    });
+    return _performRequest(
+      () async => _httpClient.get(
+        _buildUri(path, params),
+        headers: await _buildHeaders(),
+      ),
+    );
   }
 
-  Future<ApiResult> post(String path, Object? body) {
-    return _performRequest(() async {
-      final headers = await _buildHeaders();
-      final uri = _buildUri(path);
-      return _httpClient.post(uri, headers: headers, body: jsonEncode(body));
-    });
+  Future<ApiResult> post(String path, Object? body, {Duration? timeout}) {
+    return _performRequest(
+      () async => _httpClient.post(
+        _buildUri(path),
+        headers: await _buildHeaders(),
+        body: jsonEncode(body),
+      ),
+      timeout: timeout ?? _defaultTimeout,
+    );
   }
 
   Future<ApiResult> put(String path, Object? body) {
-    return _performRequest(() async {
-      final headers = await _buildHeaders();
-      final uri = _buildUri(path);
-      return _httpClient.put(uri, headers: headers, body: jsonEncode(body));
-    });
+    return _performRequest(
+      () async => _httpClient.put(
+        _buildUri(path),
+        headers: await _buildHeaders(),
+        body: jsonEncode(body),
+      ),
+    );
   }
 
   Future<ApiResult> delete(String path) {
-    return _performRequest(() async {
-      final headers = await _buildHeaders();
-      final uri = _buildUri(path);
-      return _httpClient.delete(uri, headers: headers);
-    });
+    return _performRequest(
+      () async =>
+          _httpClient.delete(_buildUri(path), headers: await _buildHeaders()),
+    );
   }
 
   Future<ApiResult> _performRequest(
-    Future<http.Response> Function() request,
-  ) async {
+    Future<http.Response> Function() request, {
+    Duration timeout = _defaultTimeout,
+  }) async {
     http.Response response;
 
     try {
-      response = await request();
-    } on SocketException {
+      response = await request().timeout(timeout);
+    } on TimeoutException {
       authEvents.add(AuthEvent.serverUnavailable);
       return ApiResult(success: false, message: "Server unavailable");
     }
@@ -71,9 +78,9 @@ class ApiClient {
         response = await request();
       } else {
         authEvents.add(
-          refreshStatus == 503
-              ? AuthEvent.serverUnavailable
-              : AuthEvent.loginNeeded,
+          refreshStatus == 401
+              ? AuthEvent.loginNeeded
+              : AuthEvent.serverUnavailable,
         );
         return ApiResult(
           success: false,
@@ -81,35 +88,9 @@ class ApiClient {
           message: "Session expired",
         );
       }
-
-      // else if (refreshStatus == 401) {
-      //   authEvents.add(AuthEvent.loginNeeded);
-      //   return ApiResult(
-      //     success: false,
-      //     message: "Tokens expired, please log in again",
-      //     response: response,
-      //   );
-      // } else if (refreshStatus == 503) {
-      //   authEvents.add(AuthEvent.serverUnavailable);
-      //   return ApiResult(success: false, message: "Server unavailable");
-      // }
     }
-    // else if (response.statusCode == 400) {
-    //   return ApiResult(
-    //     success: false,
-    //     message: "Bad request", //TODO Refactor
-    //     response: response,
-    //   );
-    // }
 
-    dynamic decodedBody;
-    try {
-      if (response.body.isNotEmpty) {
-        decodedBody = jsonDecode(response.body);
-      }
-    } catch (_) {
-      decodedBody = null;
-    }
+    final decodedBody = _tryDecodeJson(response.body);
 
     return ApiResult(
       success: response.statusCode >= 200 && response.statusCode < 300,
@@ -119,7 +100,6 @@ class ApiClient {
     );
   }
 
-  //TODO Refactor
   /// Attempts to refresh the access token using the stored refresh token.
   Future<int> _refreshAccessToken() async {
     final refreshToken = await _tokens.getRefreshToken();
@@ -130,10 +110,10 @@ class ApiClient {
       final response = await _httpClient
           .post(
             _buildUri(Endpoints.refreshToken),
-            headers: {'Content-Type': 'application/json'},
+            headers: const {'Content-Type': 'application/json'},
             body: jsonEncode({'refreshToken': refreshToken}),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(_defaultTimeout);
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
@@ -144,7 +124,7 @@ class ApiClient {
       }
 
       return response.statusCode;
-    } on TimeoutException catch (_) {
+    } on TimeoutException {
       return 503;
     }
   }
@@ -170,13 +150,13 @@ class ApiClient {
     return headers;
   }
 
-  /// Creates a basic error response with a message body.
-  http.Response _buildError(int statusCode, String message) {
-    return http.Response(
-      jsonEncode({'message': message}),
-      statusCode,
-      headers: {'Content-Type': 'application/json'},
-    );
+  dynamic _tryDecodeJson(String body) {
+    if (body.isEmpty) return null;
+    try {
+      return jsonDecode(body);
+    } catch (_) {
+      return null;
+    }
   }
 
   void dispose() {

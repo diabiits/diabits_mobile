@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:diabits_mobile/data/health_connect/health_connect_constants.dart';
 import 'package:diabits_mobile/data/network/endpoints.dart';
 import 'package:flutter/material.dart';
@@ -88,7 +86,11 @@ class HealthConnectSync {
     if (data.isEmpty) return true;
 
     final batch = _convertToRequest(data);
-    var result = await _client.post(Endpoints.healthConnect, batch.toJson());
+    var result = await _client.post(
+      Endpoints.healthConnect,
+      batch.toJson(),
+      timeout: const Duration(minutes: 5),
+    );
 
     return result.success;
   }

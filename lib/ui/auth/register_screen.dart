@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/auth/field_validators.dart';
-import '../shared/animated_button.dart';
+import '../shared/primary_button.dart';
 import 'register_view_model.dart';
 
 /// This widget provides a form for new users to create an account.
@@ -68,7 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     /// Title
                     Text(
                       'Create Account',
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.titleLarge,
                       textAlign: .center,
                     ),
                     const SizedBox(height: 32),
@@ -78,7 +78,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _usernameController,
                       decoration: const InputDecoration(
                         labelText: 'Username',
-                        border: OutlineInputBorder(),
                       ),
                       validator: FieldValidators.requiredValidator,
                       autofillHints: const [AutofillHints.username],
@@ -92,7 +91,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: vm.passwordHidden,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
                           icon: Icon(
                             vm.passwordHidden
@@ -114,7 +112,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _emailController,
                       decoration: const InputDecoration(
                         labelText: 'Email',
-                        border: OutlineInputBorder(),
                       ),
                       validator: FieldValidators.requiredValidator,
                       autofillHints: const [AutofillHints.email],
@@ -129,7 +126,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _inviteCodeController,
                       decoration: const InputDecoration(
                         labelText: 'Invite Code',
-                        border: OutlineInputBorder(),
                       ),
                       validator: FieldValidators.requiredValidator,
                       textInputAction: .done,
@@ -139,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 24),
 
                     /// Register button
-                    AnimatedButton(
+                    PrimaryButton(
                       onPressed: vm.isLoading ? null : () => _submit(vm),
                       isLoading: vm.isLoading,
                       text: 'Register',
@@ -152,7 +148,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: vm.isLoading
                           ? null
                           : () => Navigator.pop(context),
-                      child: const Text('Back to Login'),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.arrow_back, size: 18),
+                          SizedBox(width: 8),
+                          const Text('Back to Login'),
+                        ],
+                      ),
                     ),
                   ],
                 ),

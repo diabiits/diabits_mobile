@@ -1,7 +1,5 @@
 import 'dart:async';
 
-//TODO Use more instead of bubbling http status all the way to ui?
-//TODO Remove?
 /// Simple event bus for broadcasting authentication-related events.
 /// This allows different parts of the app to communicate about global transient events.
 class AuthEvents {

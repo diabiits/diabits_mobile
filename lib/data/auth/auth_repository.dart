@@ -1,22 +1,12 @@
-import 'dart:convert';
-
 import 'package:diabits_mobile/data/network/api_client.dart';
 import 'package:diabits_mobile/data/network/endpoints.dart';
 import 'package:diabits_mobile/domain/auth/auth_state_manager.dart';
-import 'package:http/http.dart' as http;
 
 import 'dtos/auth_response.dart';
+import 'dtos/auth_result.dart';
 import 'dtos/login_request.dart';
 import 'dtos/register_request.dart';
 import 'token_storage.dart';
-
-//TODO Move and rename
-class AuthResult {
-  final bool success;
-  final String? message;
-
-  AuthResult(this.success, this.message);
-}
 
 /// A repository for handling authentication-related operations.
 ///
@@ -82,9 +72,6 @@ class AuthRepository {
   }
 
   /// Attempts to automatically log in the user by validating existing tokens.
-  ///
-  /// It sends a request to a protected endpoint to check if the current access
-  /// token is valid. Returns the appropriate [AuthState] based on the response.
   Future<AuthState> autoLogin() async {
     final response = await _client.get(Endpoints.checkToken);
 
