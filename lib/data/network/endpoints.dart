@@ -7,6 +7,9 @@ class Endpoints {
   /// Endpoint for submitting health data from Health Connect.
   static const healthConnect = "/HealthData/healthConnect";
 
+  /// Endpoint for submitting and retrieving manual health data entries.
+  static const manualInput = "/HealthData/manual";
+
   // User Endpoints
   /// Endpoint for getting the last sync timestamp for a user.
   static const lastSync = "/User/lastSync";

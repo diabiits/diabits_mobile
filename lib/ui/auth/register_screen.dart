@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../domain/auth/field_validators.dart';
+import '../shared/field_validators.dart';
 import '../shared/primary_button.dart';
 import 'register_view_model.dart';
 

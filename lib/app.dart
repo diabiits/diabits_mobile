@@ -1,7 +1,7 @@
 import 'package:diabits_mobile/ui/auth/auth_event_listener.dart';
 import 'package:flutter/material.dart';
 
-import 'ui/auth/auth_gate.dart';
+import 'auth_gate.dart';
 
 /// The root widget of the Diabits application.
 ///

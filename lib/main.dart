@@ -1,6 +1,7 @@
 import 'package:diabits_mobile/app.dart';
 import 'package:diabits_mobile/ui/auth/login_view_model.dart';
 import 'package:diabits_mobile/ui/auth/register_view_model.dart';
+import 'package:diabits_mobile/ui/manual_input/manual_input_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import 'data/auth/token_storage.dart';
 import 'data/health_connect/health_connect_sync.dart';
 import 'data/health_connect/permission_handler.dart';
 import 'data/health_connect/sync_scheduler.dart';
+import 'data/manual_input/manual_input_repository.dart';
 import 'data/network/api_client.dart';
 import 'domain/auth/auth_state_manager.dart';
 
@@ -42,6 +44,12 @@ void main() async {
             tokens: context.read<TokenStorage>(),
             client: context.read<ApiClient>(),
           ),
+        ),
+
+        // Provides the ManualInputRepository for handling manual data entries.
+        Provider<ManualInputRepository>(
+          create: (context) =>
+              ManualInputRepository(client: context.read<ApiClient>()),
         ),
 
         // Provides the PermissionHandler for Health Connect permissions.
@@ -81,6 +89,13 @@ void main() async {
           create: (context) => RegisterViewModel(
             authManager: context.read<AuthStateManager>(),
             authRepo: context.read<AuthRepository>(),
+          ),
+        ),
+
+        // Provides the ManualInputModelView for the manual input screen.
+        ChangeNotifierProvider<ManualInputViewModel>(
+          create: (context) => ManualInputViewModel(
+            inputRepo: context.read<ManualInputRepository>(),
           ),
         ),
       ],
