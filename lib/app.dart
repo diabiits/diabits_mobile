@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 
 import 'ui/auth/auth_gate.dart';
 
+/// The root widget of the Diabits application.
+///
+/// Responsible for configuring the global application theme, defining the core color palette,
+/// and setting up the top-level navigation structure and authentication wrappers.
 class DiabitsApp extends StatelessWidget {
   const DiabitsApp({super.key});
 
@@ -64,7 +68,9 @@ class DiabitsApp extends StatelessWidget {
         ),
         snackBarTheme: SnackBarThemeData(backgroundColor: ternaryColor),
       ),
+      // Wraps the entire navigator to handle global authentication events.
       builder: (context, child) => AuthEventListener(child: child!),
+      // Determines the initial screen based on authentication state.
       home: const AuthGate(),
     );
   }
