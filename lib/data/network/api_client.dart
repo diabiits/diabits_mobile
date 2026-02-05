@@ -59,7 +59,7 @@ class ApiClient {
 
     try {
       response = await request();
-    } on SocketException catch (_) {
+    } on SocketException {
       authEvents.add(AuthEvent.serverUnavailable);
       return ApiResult(success: false, message: "Server unavailable");
     }
@@ -68,29 +68,55 @@ class ApiClient {
       final refreshStatus = await _refreshAccessToken();
 
       if (refreshStatus == 200) {
-        try {
-          response = await request().timeout(const Duration(seconds: 15));
-        } on TimeoutException catch (_) {
-          authEvents.add(AuthEvent.serverUnavailable);
-          return ApiResult(success: false, message: "Server unavailable");
-        }
+        response = await request();
       } else {
-        authEvents.add(AuthEvent.loginNeeded);
+        authEvents.add(
+          refreshStatus == 503
+              ? AuthEvent.serverUnavailable
+              : AuthEvent.loginNeeded,
+        );
         return ApiResult(
           success: false,
-          message: "Tokens expired, please log in again",
-          response: response,
+          statusCode: refreshStatus,
+          message: "Session expired",
         );
       }
-    } else if (response.statusCode == 400) {
-      return ApiResult(
-        success: false,
-        message: "Bad request", //TODO Refactor
-        response: response,
-      );
+
+      // else if (refreshStatus == 401) {
+      //   authEvents.add(AuthEvent.loginNeeded);
+      //   return ApiResult(
+      //     success: false,
+      //     message: "Tokens expired, please log in again",
+      //     response: response,
+      //   );
+      // } else if (refreshStatus == 503) {
+      //   authEvents.add(AuthEvent.serverUnavailable);
+      //   return ApiResult(success: false, message: "Server unavailable");
+      // }
+    }
+    // else if (response.statusCode == 400) {
+    //   return ApiResult(
+    //     success: false,
+    //     message: "Bad request", //TODO Refactor
+    //     response: response,
+    //   );
+    // }
+
+    dynamic decodedBody;
+    try {
+      if (response.body.isNotEmpty) {
+        decodedBody = jsonDecode(response.body);
+      }
+    } catch (_) {
+      decodedBody = null;
     }
 
-    return ApiResult(success: true, response: response);
+    return ApiResult(
+      success: response.statusCode >= 200 && response.statusCode < 300,
+      body: decodedBody,
+      statusCode: response.statusCode,
+      message: decodedBody is Map ? decodedBody["message"]?.toString() : null,
+    );
   }
 
   //TODO Refactor
@@ -101,11 +127,13 @@ class ApiClient {
     if (refreshToken == null) return 401;
 
     try {
-      final response = await _httpClient.post(
-        _buildUri(Endpoints.refreshToken),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refreshToken': refreshToken}),
-      );
+      final response = await _httpClient
+          .post(
+            _buildUri(Endpoints.refreshToken),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refreshToken': refreshToken}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
@@ -115,8 +143,8 @@ class ApiClient {
         await _tokens.saveRefreshToken(auth.refreshToken);
       }
 
-      return 200;
-    } catch (_) {
+      return response.statusCode;
+    } on TimeoutException catch (_) {
       return 503;
     }
   }

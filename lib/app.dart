@@ -16,18 +16,19 @@ class DiabitsApp extends StatelessWidget {
   /// [AuthGate] as the home widget.
   @override
   Widget build(BuildContext context) {
-    return AuthEventListener(
-      child: MaterialApp(
-        title: 'Diabits',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFFef88ad),
-            brightness: Brightness.light,
-          ),
+    return MaterialApp(
+      title: 'Diabits',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFef88ad),
+          brightness: Brightness.light,
         ),
-        home: const AuthGate(),
       ),
+      builder: (context, child) {
+        return AuthEventListener(child: child!);
+      },
+      home: const AuthGate(),
     );
   }
 }

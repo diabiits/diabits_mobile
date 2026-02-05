@@ -1,13 +1,13 @@
-import 'package:http/http.dart' as http;
-
 class ApiResult {
   final bool success;
+  final dynamic body;
+  final int? statusCode;
   final String? message;
-  final http.Response? response;
 
   ApiResult({
     required this.success,
+    this.body,
+    this.statusCode,
     this.message,
-    this.response,
   });
 }

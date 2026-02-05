@@ -48,7 +48,7 @@ class RegisterViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final (success, message) = await _authRepo.register(
+    final result = await _authRepo.register(
       RegisterRequest(
         username: username.trim(),
         password: password,
@@ -58,10 +58,10 @@ class RegisterViewModel extends ChangeNotifier {
     );
 
     _isLoading = false;
-    if (success) {
+    if (result.success) {
       await _authManager.markAuthenticated();
-    } else if (message != null) {
-      _snackMessage = message;
+    } else if (result.message != null) {
+      _snackMessage = result.message;
     }
     notifyListeners();
   }

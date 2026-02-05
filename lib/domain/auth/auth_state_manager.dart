@@ -26,7 +26,7 @@ class AuthStateManager extends ChangeNotifier {
        _syncScheduler = syncCoordinator {
     _authEventSubscription = authEvents.stream.listen((event) {
       if (event == AuthEvent.loginNeeded) {
-        logout();
+        markUnauthenticated();
       }
     });
   }

@@ -21,20 +21,7 @@ class AuthGate extends StatelessWidget {
   /// - [AuthState.authenticated]: Shows the main manual input screen.
   @override
   Widget build(BuildContext context) {
-    /// uses context.select to only rebuild the widget if the authState changes
-    /// instead of using context.watch which would rebuild the widget every
-    /// time AuthStateManager is updated
-
-    String errorMessage = "test";
     final authState = context.select((AuthStateManager as) => as.authState);
-    authEvents.stream.listen((event) {
-      if (event == AuthEvent.loginNeeded) {
-        errorMessage = "Login needed";
-      }
-      else if (event == AuthEvent.serverUnavailable) {
-        errorMessage = "Server unavailable";
-      }
-    });
 
     switch (authState) {
       case .none:

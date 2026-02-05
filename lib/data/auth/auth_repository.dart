@@ -10,13 +10,13 @@ import 'dtos/login_request.dart';
 import 'dtos/register_request.dart';
 import 'token_storage.dart';
 
-class Response {
+//TODO Move and rename
+class AuthResult {
   final bool success;
   final String? message;
 
-  Response(this.success, this.message);
+  AuthResult(this.success, this.message);
 }
-
 
 /// A repository for handling authentication-related operations.
 ///
@@ -36,26 +36,17 @@ class AuthRepository {
   /// It sends the user's registration details and, upon success, saves the
   /// returned authentication tokens. Returns a tuple with the registration
   /// status and an optional error message.
-  Future<Response> register(
-    RegisterRequest request,
-  ) async {
+  Future<AuthResult> register(RegisterRequest request) async {
     var result = await _client.post(Endpoints.register, request.toJson());
 
-    if (!result.success) {
-      if (result.response!.statusCode == 400) {
-        final body = jsonDecode(result.response!.body);
-        return Response(false, body["message"].toString());
-      }
-      return Response(false, null);
+    if (result.success) {
+      final authResponse = AuthResponse.fromJson(result.body);
+      await _tokens.saveAccessToken(authResponse.accessToken);
+      await _tokens.saveRefreshToken(authResponse.refreshToken);
+      return AuthResult(true, null);
     }
 
-    final json = jsonDecode(result.response!.body);
-    final authResponse = AuthResponse.fromJson(json);
-
-    await _tokens.saveAccessToken(authResponse.accessToken);
-    await _tokens.saveRefreshToken(authResponse.refreshToken);
-
-    return (true, null);
+    return AuthResult(false, result.message);
   }
 
   /// Logs in a user with the given credentials.
@@ -63,21 +54,17 @@ class AuthRepository {
   /// It sends a login request to the backend and, if successful, stores the
   /// authentication tokens. Returns a tuple with the login status and an
   /// optional error message.
-  Future<(bool success, String? message)> login(LoginRequest request) async {
+  Future<AuthResult> login(LoginRequest request) async {
     final result = await _client.post(Endpoints.login, request.toJson());
 
-    if (!result.success) {
-      return result.response?.statusCode == 400
-          ? (false, "Invalid credentials")
-          : (false, null);
+    if (result.success) {
+      final authResponse = AuthResponse.fromJson(result.body);
+      await _tokens.saveAccessToken(authResponse.accessToken);
+      await _tokens.saveRefreshToken(authResponse.refreshToken);
+      return AuthResult(true, null);
     }
 
-    final json = jsonDecode(result.response!.body);
-    final authResponse = AuthResponse.fromJson(json);
-
-    await _tokens.saveAccessToken(authResponse.accessToken);
-    await _tokens.saveRefreshToken(authResponse.refreshToken);
-    return (true, null);
+    return AuthResult(false, result.message);
   }
 
   /// Logs out the current user.
@@ -101,11 +88,9 @@ class AuthRepository {
   Future<AuthState> autoLogin() async {
     final response = await _client.get(Endpoints.checkToken);
 
-    if (response.statusCode == 200) {
-      return AuthState.authenticated;
-    } else {
-      return AuthState.unauthenticated;
-    }
+    return response.success
+        ? AuthState.authenticated
+        : AuthState.unauthenticated;
   }
 
   /// Checks if both access and refresh tokens are stored locally.

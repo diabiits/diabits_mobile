@@ -2,6 +2,7 @@ import 'package:diabits_mobile/data/auth/auth_repository.dart';
 import 'package:diabits_mobile/data/auth/dtos/login_request.dart';
 import 'package:diabits_mobile/domain/auth/auth_state_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 
 /// This class handles the business logic for the login process, including
 /// managing the loading state and password visibility.
@@ -42,16 +43,16 @@ class LoginViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final (success, message) = await _authRepo.login(
+    final result = await _authRepo.login(
       LoginRequest(username: username.trim(), password: password),
     );
 
     _isLoading = false;
-    if (success) {
+    if (result.success) {
       await _authManager.markAuthenticated();
     }
-    else if (message != null) {
-      _snackMessage = message;
+    else if (result.message != null) {
+      _snackMessage = result.message;
     }
     notifyListeners();
   }
