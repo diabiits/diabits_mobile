@@ -4,13 +4,10 @@ import '../../domain/auth/field_validators.dart';
 import '../shared/primary_button.dart';
 import 'register_view_model.dart';
 
-/// This widget provides a form for new users to create an account.
-/// It includes fields for username, password, email, and an invite code.
-/// It communicates with [RegisterViewModel] to handle the registration logic.
+/// Provides a form-based interface for new users to create an account.
 ///
-/// For a user to be able to register they need to have a valid invite code
-/// with the corresponding email.
-/// Invites can only be created by admins and are stored in the backend.
+/// This screen coordinates with [RegisterViewModel] to handle input validation and submission.
+/// Registration requires a pre-authorized invite code linked to the user's email address, managed by administrators in the backend.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -18,8 +15,7 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-/// This class manages the form state, text editing controllers, and user
-/// interactions like submitting the form.
+/// Manages the local UI state, including input controllers and form validation.
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
@@ -27,10 +23,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _inviteCodeController = TextEditingController();
 
-  /// Builds the UI for the registration screen.
+  /// Builds the layout for the registration form.
   ///
-  /// It includes a form with fields for username, password, email, and invite
-  /// code, along with a register button and a link to go back to the login screen.
+  /// Observes [RegisterViewModel] for state changes such as loading status and messages.
+  /// Includes a [Hero] animation for branding consistency and [AutofillHints] to improve the mobile user experience.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,8 +164,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  /// Handles the form submission.
-  /// If the form is valid, it calls the view model to register the user.
+  /// Validates the form and triggers the registration process.
+  /// Extracts text from local controllers and passes them to the [RegisterViewModel].
   void _submit(RegisterViewModel vm) async {
     if (!_formKey.currentState!.validate()) return;
 

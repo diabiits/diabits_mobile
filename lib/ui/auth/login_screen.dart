@@ -6,9 +6,10 @@ import 'package:provider/provider.dart';
 import '../../domain/auth/field_validators.dart';
 import 'login_view_model.dart';
 
-/// This widget provides a form with username and password fields, along
-/// with a login button and a link to the registration screen.
-/// It communicates with a [LoginViewModel] to handle the authentication logic.
+/// Provides a user interface for authenticating existing users.
+///
+/// This screen displays a login form and coordinates with the [LoginViewModel]
+/// to process credentials and handle navigation to registration.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -16,14 +17,16 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-/// This class manages the form state, text editing controllers, and user
-/// interactions like submitting the form.
+/// Manages the local UI state for the login form, including input controllers and form validation.
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   late final _usernameController = TextEditingController();
   late final _passwordController = TextEditingController();
 
-  /// Builds the UI for the login screen.
+  /// Builds the layout for the login form.
+  ///
+  /// Observes [LoginViewModel] for state changes such as loading status and messages.
+  /// Includes a [Hero] animation shared between [LoginScreen] and [RegisterScreen] for branding consistency.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,7 +59,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-
                       Text(
                         'Connecting the Dots',
                         style: Theme.of(context).textTheme.titleMedium,
@@ -139,18 +141,17 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// Handles the form submission.
-  /// If the form is valid, it calls the view model to log in the user.
-  Future<void> _submit(LoginViewModel vm) async {
+  /// Validates the form and triggers the login process.
+  /// Extracts text from local controllers and passes them to the [LoginViewModel].
+  Future<void> _submit(LoginViewModel viewModel) async {
     if (!_formKey.currentState!.validate()) return;
 
-    await vm.submit(
+    await viewModel.submit(
       username: _usernameController.text,
       password: _passwordController.text,
     );
   }
 
-  /// Disposes the text editing controllers when the widget is removed from the tree.
   @override
   void dispose() {
     _usernameController.dispose();
