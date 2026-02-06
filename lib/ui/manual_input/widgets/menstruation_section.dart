@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../manual_input_view_model.dart';
 import '../manual_input_screen.dart';
 
+//TODO Fix overflow
 const _flowItems = [
   _FlowOption(value: "SPOTTING", label: "Spotting"),
   _FlowOption(value: "LIGHT", label: "Light"),
@@ -71,10 +72,6 @@ class MenstruationFlowSheet extends StatelessWidget {
       children: [
         Text('Flow', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
-        Text(
-          isMenstruating ? 'Pick today’s flow level.' : 'Enable menstruation first.',
-        ),
-        const SizedBox(height: 12),
         for (final option in _flowItems)
           RadioListTile<String>(
             value: option.value,
@@ -92,6 +89,7 @@ class MenstruationFlowSheet extends StatelessWidget {
         ),
       ],
     );
+
   }
 }
 
