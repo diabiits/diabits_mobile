@@ -5,69 +5,135 @@ import 'package:provider/provider.dart';
 import '../manual_input_view_model.dart';
 import 'medication_form.dart';
 
-/// A widget that displays a list of medications for the selected day.
-///
-/// It listens to the [ManualInputViewModel] for changes and updates the UI accordingly.
 class MedicationList extends StatelessWidget {
-  const MedicationList({super.key});
+  final bool embedded;
 
-  /// Builds the list of medication entries.
-  ///
-  /// If there are no medications, it displays "No medications added yet".
-  /// Otherwise, it shows a list of [ListTile] widgets, each representing a medication entry.
+  const MedicationList({super.key, this.embedded = false});
+
+  Future<void> _openEditSheet(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => SafeArea(
+        top: false,
+        child: const Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: MedicationForm(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final vm = context.watch<ManualInputViewModel>();
-    final manager = vm.medicationManager;
 
-    if (manager.medications.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: Text("No medications added yet"),
+    final meds = context.select(
+          (ManualInputViewModel vm) => vm.medicationManager.medications,
+    );
+
+    if (meds.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        child: Text(
+          'No medications logged yet',
+          style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
         ),
       );
     }
 
-    manager.medications.sort((a, b) => a.time.compareTo(b.time));
+    final sorted = [...meds]..sort((a, b) => a.time.compareTo(b.time));
 
-    return ListView.builder(
+    final list = ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: manager.medications.length,
+      itemCount: sorted.length,
+      separatorBuilder: (_, __) => Divider(
+        height: 1,
+        thickness: 1,
+        color: theme.dividerColor.withValues(alpha: 0.30),
+      ),
       itemBuilder: (_, index) {
-        final med = manager.medications[index];
+        final med = sorted[index];
 
         return Dismissible(
           key: ValueKey(med.id),
+          direction: DismissDirection.horizontal,
+
           background: Container(
-            color: theme.colorScheme.primary,
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.only(left: 20),
-            child: const Icon(Icons.delete, color: Colors.white),
-          ),
-          secondaryBackground: Container(
             color: theme.colorScheme.secondary,
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
             child: const Icon(Icons.edit, color: Colors.white),
           ),
+          secondaryBackground: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            color: theme.colorScheme.error,
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+
           confirmDismiss: (direction) async {
-            if (direction == DismissDirection.endToStart) {
+            final vm = context.read<ManualInputViewModel>();
+
+            if (direction == DismissDirection.startToEnd) {
               vm.startEditing(med);
-              showDialog(context: context, builder: (context) => const MedicationForm());
-              return false;
+              await _openEditSheet(context);
+              return false; // edit does not dismiss
             }
-            return true;
+
+            return direction == DismissDirection.endToStart; // delete dismisses
           },
-          onDismissed: (_) => vm.removeMedicationAt(med.id),
-          child: ListTile(
-            title: Text('${med.name} (${med.amount})'),
-            subtitle: Text(DateFormat.Hm().format(med.time)),
+
+          onDismissed: (direction) {
+            if (direction == DismissDirection.endToStart) {
+              context.read<ManualInputViewModel>().removeMedicationAt(med.id);
+            }
+          },
+
+          child: InkWell(
+            onTap: () async {
+              final vm = context.read<ManualInputViewModel>();
+              vm.startEditing(med);
+              await _openEditSheet(context);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(DateFormat.Hm().format(med.time), style: theme.textTheme.labelLarge),
+                        const SizedBox(height: 4),
+                        Text('${med.name} (${med.amount})', style: theme.textTheme.bodyLarge),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+            ),
           ),
         );
+
       },
+    );
+
+    if (embedded) return list;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: list,
+      ),
     );
   }
 }

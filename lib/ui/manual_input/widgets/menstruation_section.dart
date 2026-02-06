@@ -2,77 +2,102 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../manual_input_view_model.dart';
+import '../manual_input_screen.dart';
 
-/// A list of dropdown menu items representing menstrual flow levels.
 const _flowItems = [
-  DropdownMenuItem(value: "SPOTTING", child: Text("Spotting")),
-  DropdownMenuItem(value: "LIGHT", child: Text("Light")),
-  DropdownMenuItem(value: "MEDIUM", child: Text("Medium")),
-  DropdownMenuItem(value: "HEAVY", child: Text("Heavy")),
+  _FlowOption(value: "SPOTTING", label: "Spotting"),
+  _FlowOption(value: "LIGHT", label: "Light"),
+  _FlowOption(value: "MEDIUM", label: "Medium"),
+  _FlowOption(value: "HEAVY", label: "Heavy"),
 ];
 
-/// A widget for logging menstruation data.
-///
-/// This widget includes a switch to indicate if the user is menstruating
-/// and a dropdown to specify the flow level.
-class MenstruationSection extends StatelessWidget {
-  const MenstruationSection({super.key});
+class MenstruationInlineTile extends StatelessWidget {
+  final VoidCallback onPickFlow;
 
-  /// Builds the UI for the menstruation section.
-  ///
-  /// Displays a switch to toggle menstruation status and, if enabled,
-  /// shows a dropdown to select the flow level.
+  const MenstruationInlineTile({super.key, required this.onPickFlow});
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<ManualInputViewModel>();
     final manager = vm.menstruationManager;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SwitchListTile.adaptive(
-          contentPadding: EdgeInsets.zero,
-          title: Text("Menstruating?", style: Theme.of(context).textTheme.titleMedium),
-          value: manager.menstruation != null,
-          onChanged: vm.setIsMenstruating,
-        ),
-        if (manager.menstruation != null) ...[
-          const SizedBox(height: 12),
-          const _FlowDropdown(),
-          const SizedBox(height: 12),
+    final isMenstruating = manager.menstruation != null;
+    final flow = manager.menstruation?.flow;
+
+    final flowLabel = _flowItems.firstWhere(
+          (x) => x.value == flow,
+      orElse: () => const _FlowOption(value: "MEDIUM", label: "Medium"),
+    ).label;
+
+    return ActionTile(
+      title: 'Menstruation',
+      subtitle: isMenstruating ? 'Flow: $flowLabel' : 'Not menstruating',
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Switch.adaptive(
+            value: isMenstruating,
+            onChanged: (value) => vm.setIsMenstruating(value),
+          ),
+          const SizedBox(width: 6),
+          IconButton(
+            tooltip: 'Pick flow',
+            onPressed: isMenstruating ? onPickFlow : null,
+            icon: const Icon(Icons.tune),
+          ),
         ],
+      ),
+      onTap: () {
+        vm.setIsMenstruating(!isMenstruating);
+      },
+    );
+  }
+}
+
+class MenstruationFlowSheet extends StatelessWidget {
+  const MenstruationFlowSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<ManualInputViewModel>();
+    final manager = vm.menstruationManager;
+    final isMenstruating = manager.menstruation != null;
+
+    final current = manager.menstruation?.flow ?? "MEDIUM";
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Flow', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Text(
+          isMenstruating ? 'Pick today’s flow level.' : 'Enable menstruation first.',
+        ),
+        const SizedBox(height: 12),
+        for (final option in _flowItems)
+          RadioListTile<String>(
+            value: option.value,
+            groupValue: current,
+            onChanged: isMenstruating ? (v) => vm.setFlow(v!) : null,
+            title: Text(option.label),
+          ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Done'),
+          ),
+        ),
       ],
     );
   }
 }
 
-/// A private widget that renders a dropdown for selecting menstrual flow.
-class _FlowDropdown extends StatelessWidget {
-  const _FlowDropdown();
+class _FlowOption {
+  final String value;
+  final String label;
 
-  /// Builds the dropdown UI.
-  ///
-  /// The dropdown is wrapped in an [InputDecorator] to match the app's
-  /// text field styling.
-  @override
-  Widget build(BuildContext context) {
-    final viewModel = context.watch<ManualInputViewModel>();
-    final manager = viewModel.menstruationManager;
-
-    return InputDecorator(
-      decoration: const InputDecoration(
-        labelText: "Flow",
-        border: OutlineInputBorder(),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          style: Theme.of(context).textTheme.bodyLarge,
-          value: manager.menstruation!.flow,
-          isDense: true,
-          items: _flowItems,
-          onChanged: (v) => {if (v != null) viewModel.setFlow(v)},
-        ),
-      ),
-    );
-  }
+  const _FlowOption({required this.value, required this.label});
 }

@@ -4,10 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../manual_input_view_model.dart';
 
-/// A form for users to manually input medication details.
-///
-/// This widget includes fields for medication name, amount, and the time it was taken.
-/// It provides validation and a button to add the medication to medication list.
 class MedicationForm extends StatefulWidget {
   const MedicationForm({super.key});
 
@@ -15,10 +11,6 @@ class MedicationForm extends StatefulWidget {
   State<MedicationForm> createState() => _MedicationFormState();
 }
 
-/// State management for the [MedicationForm].
-///
-/// Handles form validation, controller lifecycle, and user interactions
-/// like picking a time and submitting the form.
 class _MedicationFormState extends State<MedicationForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -26,136 +18,153 @@ class _MedicationFormState extends State<MedicationForm> {
   final _timeController = TextEditingController();
 
   TimeOfDay _selectedTime = TimeOfDay.now();
+  String? _prefilledForId;
 
-  /// Builds the user interface for the medication form.
-  ///
-  /// Initializes the time controller with the current time if it's empty.
-  /// Lays out the text fields for name, amount, and time, along with the "Add" button.
   @override
-  Widget build(BuildContext context) {
-    final vm = context.watch<ManualInputViewModel>();
-    final editingMed = vm.editingMedication;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-    if (editingMed != null && _nameController.text.isEmpty && _amountController.text.isEmpty) {
-      _nameController.text = editingMed.name;
-      _amountController.text = editingMed.amount.toString();
-      _selectedTime = TimeOfDay.fromDateTime(editingMed.time);
+    final vm = context.read<ManualInputViewModel>();
+    final editing = vm.editingMedication;
+    final id = editing?.id;
+
+    if (id != null && _prefilledForId != id) {
+      _prefilledForId = id;
+      _nameController.text = editing!.name;
+      _amountController.text = editing.amount.toString();
+      _selectedTime = TimeOfDay.fromDateTime(editing.time);
+      _timeController.text = _selectedTime.format(context);
+    }
+
+    if (id == null && _prefilledForId != null) {
+      _prefilledForId = null;
+      _nameController.clear();
+      _amountController.clear();
+      _selectedTime = TimeOfDay.now();
       _timeController.text = _selectedTime.format(context);
     }
 
     if (_timeController.text.isEmpty) {
       _timeController.text = _selectedTime.format(context);
     }
+  }
 
-    return AlertDialog(
-      title: Text(editingMed != null ? "Edit Medication" : "Add Medication"),
-      scrollable: true,
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: "Medication Name",
-                border: OutlineInputBorder(),
-              ),
-              validator: FieldValidators.requiredValidator,
-              textInputAction: TextInputAction.next,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _amountController,
-              decoration: const InputDecoration(labelText: "Amount", border: OutlineInputBorder()),
-              keyboardType: TextInputType.number,
-              validator: FieldValidators.integerValidator,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<ManualInputViewModel>();
+    final editingMed = vm.editingMedication;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 150),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            editingMed != null ? 'Edit medication' : 'Add medication',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 12),
+          Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _timeController,
-                    readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: "Taken at",
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.access_time),
-                    ),
-                    onTap: _pickTime,
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Medication name',
+                    border: OutlineInputBorder(),
                   ),
+                  validator: FieldValidators.requiredValidator,
+                  textInputAction: TextInputAction.next,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _addMedication,
-                    icon: Icon(editingMed != null ? Icons.check : Icons.add),
-                    label: Text(editingMed != null ? "Update" : "Add medication"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                    ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _amountController,
+                  decoration: const InputDecoration(
+                    labelText: 'Amount',
+                    border: OutlineInputBorder(),
                   ),
+                  keyboardType: TextInputType.number,
+                  validator: FieldValidators.integerValidator,
                 ),
-                if (editingMed != null)
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      _nameController.clear();
-                      _amountController.clear();
-                      vm.cancelEditing();
-                    },
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _timeController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Taken at',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.access_time),
                   ),
+                  onTap: _pickTime,
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    context.read<ManualInputViewModel>().cancelEditing();
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _submit,
+                  icon: Icon(editingMed != null ? Icons.check : Icons.add),
+                  label: Text(editingMed != null ? 'Update' : 'Add'),
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  /// Validates the form and adds the new medication entry.
-  ///
-  /// If the form is valid, it reads the input values, creates a [DateTime] object,
-  /// and calls the view model to add the medication. It then clears the input fields.
-  void _addMedication() {
+  void _submit() {
     final vm = context.read<ManualInputViewModel>();
     final selectedDay = vm.selectedDate;
 
-    if (_formKey.currentState?.validate() ?? false) {
-      final name = _nameController.text.trim();
-      final amount = int.parse(_amountController.text.trim());
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-      final time = DateTime(
-        selectedDay.year,
-        selectedDay.month,
-        selectedDay.day,
-        _selectedTime.hour,
-        _selectedTime.minute,
-      );
+    final name = _nameController.text.trim();
+    final amount = int.parse(_amountController.text.trim());
 
-      vm.addMedication(name, amount, time);
+    final time = DateTime(
+      selectedDay.year,
+      selectedDay.month,
+      selectedDay.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
 
-      _nameController.clear();
-      _amountController.clear();
-      Navigator.pop(context);
-    }
+    vm.addMedication(name, amount, time);
+    Navigator.pop(context);
   }
 
-  /// Displays a time picker to allow the user to select a time.
-  ///
-  /// Updates the state with the chosen time and formats it into the time text field.
   Future<void> _pickTime() async {
-    final pickedTime = await showTimePicker(context: context, initialTime: _selectedTime);
-    if (pickedTime != null) {
-      setState(() => _selectedTime = pickedTime);
-      _timeController.text = pickedTime.format(context);
-    }
+    final picked = await showTimePicker(context: context, initialTime: _selectedTime);
+    if (picked == null) return;
+
+    setState(() => _selectedTime = picked);
+    _timeController.text = picked.format(context);
   }
 
-  /// Disposes the text editing controllers when the widget is removed from the tree.
   @override
   void dispose() {
     _nameController.dispose();

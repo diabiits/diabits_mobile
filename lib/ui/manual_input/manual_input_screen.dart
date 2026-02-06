@@ -1,9 +1,9 @@
 import 'package:diabits_mobile/data/health_connect/permission_handler.dart';
-import 'package:diabits_mobile/ui/manual_input/widgets/top_bar.dart';
 import 'package:diabits_mobile/ui/manual_input/widgets/date_selector.dart';
 import 'package:diabits_mobile/ui/manual_input/widgets/medication_form.dart';
 import 'package:diabits_mobile/ui/manual_input/widgets/medication_list.dart';
 import 'package:diabits_mobile/ui/manual_input/widgets/menstruation_section.dart';
+import 'package:diabits_mobile/ui/manual_input/widgets/top_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart' as permission_handler;
 import 'package:provider/provider.dart';
@@ -11,11 +11,6 @@ import 'package:provider/provider.dart';
 import '../shared/primary_button.dart';
 import 'manual_input_view_model.dart';
 
-/// The main screen for manually inputting health data.
-///
-/// This screen aggregates different input widgets for menstruation, medication,
-/// and allows users to save their data. It also handles requesting Health
-/// Connect permissions when the screen is first displayed.
 class ManualInputScreen extends StatefulWidget {
   const ManualInputScreen({super.key});
 
@@ -27,136 +22,260 @@ class _ManualInputScreenState extends State<ManualInputScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAndRequestPermissions();
+    _ensurePermissionsAndLoad();
   }
 
-  /// Checks for necessary permissions and prompts the user if they are not granted.
-  ///
-  /// This method will continuously prompt the user with a non-dismissible dialog
-  /// until all required permissions are granted. Once permissions are granted,
-  /// it proceeds to load the data for the selected day.
-  Future<void> _checkAndRequestPermissions() async {
+  Future<void> _ensurePermissionsAndLoad() async {
     final permissionHandler = PermissionHandler();
-    bool permissionsGranted = false;
 
-    while (!permissionsGranted) {
-      permissionsGranted = await permissionHandler.requestPermissions();
-      if (!permissionsGranted && mounted) {
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) => AlertDialog(
-            title: const Text('Permissions Required'),
-            content: const Text(
-              'This app needs health permissions to function properly. Please grant the necessary permissions to continue.',
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Open Settings'),
-                onPressed: () {
-                  permission_handler.openAppSettings();
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
+    final granted = await permissionHandler.requestPermissions();
+    if (!mounted) return;
+
+    if (!granted) {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => AlertDialog(
+          title: const Text('Permissions required'),
+          content: const Text(
+            'Health permissions are needed to load and save manual input for the selected day.',
           ),
-        );
-      }
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Not now'),
+            ),
+            TextButton(
+              onPressed: () {
+                permission_handler.openAppSettings();
+                Navigator.pop(context);
+              },
+              child: const Text('Open settings'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _ensurePermissionsAndLoad();
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+
+      return;
     }
 
-    // When permissions are finally granted, load the data.
-    if (mounted) {
-      context.read<ManualInputViewModel>().loadDataForSelectedDate();
-    }
+    await context.read<ManualInputViewModel>().loadDataForSelectedDate();
   }
 
-  void _showMedicationDialog(BuildContext context) {
-    showDialog(context: context, builder: (context) => const MedicationForm());
+  Future<void> _openMedicationSheet(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (_) => const Padding(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 64),
+        child: MedicationForm(),
+      ),
+    );
   }
 
-  /// Builds the UI for the manual input screen.
-  ///
-  /// Lays out the day selector, menstruation section, medication form, and medication list.
-  /// Includes a save button that triggers the data submission process.
+  Future<void> _openFlowSheet(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (_) => const Padding(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: MenstruationFlowSheet(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: const TopBar(),
       body: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.only(top: 8, bottom: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xffef88ad),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: const BoxDecoration(
+              color: Color(0xffef88ad),
               boxShadow: [
-                BoxShadow(color: const Color(0xffa53860), spreadRadius: 5, blurRadius: 7),
+                BoxShadow(
+                  color: Color(0xffa53860),
+                  spreadRadius: 2,
+                  blurRadius: 6,
+                ),
               ],
             ),
-            child: DateSelector(),
+            child: const DateSelector(),
           ),
           Expanded(
             child: SafeArea(
               top: false,
+              bottom: false,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 16),
-                    const MenstruationSection(),
-                    const Divider(),
                     const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Medications", style: Theme.of(context).textTheme.titleMedium),
-                        TextButton.icon(
-                          onPressed: () {
-                            context.read<ManualInputViewModel>().cancelEditing();
-                            _showMedicationDialog(context);
-                          },
-                          icon: const Icon(Icons.add),
-                          label: const Text("Add"),
-                        ),
-                      ],
+
+                    MenstruationInlineTile(
+                      onPickFlow: () => _openFlowSheet(context),
                     ),
-                    const MedicationList(),
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 12),
+
+                    MedicationSection(
+                      onAdd: () {
+                        context.read<ManualInputViewModel>().cancelEditing();
+                        _openMedicationSheet(context);
+                      },
+                    ),
+
+
+                    const SizedBox(height: 90),
                   ],
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: Consumer<ManualInputViewModel>(
-                builder: (context, viewModel, _) => PrimaryButton(
-                  onPressed: () => _submit(context, viewModel),
-                  isLoading: viewModel.isLoading,
-                  text: "Save All Changes",
                 ),
               ),
             ),
           ),
         ],
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: SizedBox(
+            height: 52,
+            child: Consumer<ManualInputViewModel>(
+              builder: (context, vm, _) => PrimaryButton(
+                onPressed: vm.hasUnsavedChanges && !vm.isLoading ? () => _submit(context, vm) : null,
+                isLoading: vm.isLoading,
+                text: 'Save changes',
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  /// Handles the submission of the manual input data.
-  ///
-  /// Calls the view model to save the data and shows a confirmation
-  /// or error message to the user via a [SnackBar].
-  Future<void> _submit(BuildContext context, ManualInputViewModel modelView) async {
+  Future<void> _submit(BuildContext context, ManualInputViewModel vm) async {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      await modelView.submit();
-      messenger.showSnackBar(const SnackBar(content: Text("Data updated successfully!")));
-    } catch (e) {
-      messenger.showSnackBar(const SnackBar(content: Text("Failed to save data")));
+      await vm.submit();
+      messenger.showSnackBar(const SnackBar(content: Text('Saved')));
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('Failed to save')));
     }
+  }
+}
+
+class ActionTile extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+  final Widget? trailing;
+
+  const ActionTile({
+    super.key,
+    required this.title,
+    this.subtitle,
+    required this.onTap,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.65),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.titleMedium),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 6),
+                      Text(subtitle!, style: theme.textTheme.bodyMedium),
+                    ],
+                  ],
+                ),
+              ),
+              trailing ?? const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MedicationSection extends StatelessWidget {
+  final VoidCallback onAdd;
+
+  const MedicationSection({super.key, required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final outerColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.65);
+    final innerColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.40);
+
+    return Material(
+      color: outerColor,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 6, 6, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text('Medications', style: theme.textTheme.titleMedium),
+                  ),
+                  IconButton(
+                    tooltip: 'Add medication',
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: innerColor,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: const MedicationList(embedded: true),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
