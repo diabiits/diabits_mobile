@@ -2,100 +2,101 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../manual_input_view_model.dart';
-import '../manual_input_screen.dart';
 
-//TODO Fix overflow
-const _flowItems = [
-  _FlowOption(value: "SPOTTING", label: "Spotting"),
-  _FlowOption(value: "LIGHT", label: "Light"),
-  _FlowOption(value: "MEDIUM", label: "Medium"),
-  _FlowOption(value: "HEAVY", label: "Heavy"),
+const _flowOptions = [
+  DropdownMenuItem(value: "SPOTTING", child: Text("Spotting")),
+  DropdownMenuItem(value: "LIGHT", child: Text("Light")),
+  DropdownMenuItem(value: "MEDIUM", child: Text("Medium")),
+  DropdownMenuItem(value: "HEAVY", child: Text("Heavy")),
 ];
 
-class MenstruationInlineTile extends StatelessWidget {
-  final VoidCallback onPickFlow;
-
-  const MenstruationInlineTile({super.key, required this.onPickFlow});
+class MenstruationSection extends StatelessWidget {
+  const MenstruationSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<ManualInputViewModel>();
-    final manager = vm.menstruationManager;
+    final theme = Theme.of(context);
 
-    final isMenstruating = manager.menstruation != null;
-    final flow = manager.menstruation?.flow;
+    final isMenstruating = context.select<ManualInputViewModel, bool>(
+      (vm) => vm.menstruationManager.menstruation != null,
+    );
 
-    final flowLabel = _flowItems.firstWhere(
-          (x) => x.value == flow,
-      orElse: () => const _FlowOption(value: "MEDIUM", label: "Medium"),
-    ).label;
+    final currentFlow = context.select<ManualInputViewModel, String?>(
+      (vm) => vm.menstruationManager.menstruation?.flow,
+    );
 
-    return ActionTile(
-      title: 'Menstruation',
-      subtitle: isMenstruating ? 'Flow: $flowLabel' : 'Not menstruating',
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Switch.adaptive(
-            value: isMenstruating,
-            onChanged: (value) => vm.setIsMenstruating(value),
-          ),
-          const SizedBox(width: 6),
-          IconButton(
-            tooltip: 'Pick flow',
-            onPressed: isMenstruating ? onPickFlow : null,
-            icon: const Icon(Icons.tune),
-          ),
-        ],
+    //TODO Move to theme
+    final outerColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.65);
+    final innerColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.40);
+
+    return Material(
+      color: outerColor,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: .stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(6),
+              child: Row(
+                children: [
+                  Expanded(child: Text('Menstruation', style: theme.textTheme.titleMedium)),
+                  Switch.adaptive(
+                    value: isMenstruating,
+                    onChanged: (value) =>
+                        context.read<ManualInputViewModel>().setIsMenstruating(value),
+                  ),
+                ],
+              ),
+            ),
+            if (isMenstruating && currentFlow != null)
+              _FlowDropdown(
+                value: currentFlow,
+                backgroundColor: innerColor,
+                textStyle: theme.textTheme.bodyMedium,
+                onChanged: (value) => context.read<ManualInputViewModel>().setFlow(value),
+              ),
+          ],
+        ),
       ),
-      onTap: () {
-        vm.setIsMenstruating(!isMenstruating);
-      },
     );
   }
 }
 
-class MenstruationFlowSheet extends StatelessWidget {
-  const MenstruationFlowSheet({super.key});
+class _FlowDropdown extends StatelessWidget {
+  final String value;
+  final Color backgroundColor;
+  final TextStyle? textStyle;
+  final ValueChanged<String> onChanged;
+
+  const _FlowDropdown({
+    required this.value,
+    required this.backgroundColor,
+    required this.textStyle,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<ManualInputViewModel>();
-    final manager = vm.menstruationManager;
-    final isMenstruating = manager.menstruation != null;
-
-    final current = manager.menstruation?.flow ?? "MEDIUM";
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text('Flow', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
-        for (final option in _flowItems)
-          RadioListTile<String>(
-            value: option.value,
-            groupValue: current,
-            onChanged: isMenstruating ? (v) => vm.setFlow(v!) : null,
-            title: Text(option.label),
-          ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: FilledButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Done'),
+    return Container(
+      decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(14)),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            items: _flowOptions,
+            borderRadius: BorderRadius.circular(14),
+            style: textStyle,
+            onChanged: (v) {
+              if (v != null) onChanged(v);
+            },
           ),
         ),
-      ],
+      ),
     );
-
   }
-}
-
-class _FlowOption {
-  final String value;
-  final String label;
-
-  const _FlowOption({required this.value, required this.label});
 }

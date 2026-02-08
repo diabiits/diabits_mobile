@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:diabits_mobile/data/auth/dtos/login_request.dart';
 import 'package:diabits_mobile/data/health_connect/sync_scheduler.dart';
 import 'package:diabits_mobile/domain/auth/auth_event_broadcaster.dart';
 import 'package:flutter/material.dart';
 
 import 'package:diabits_mobile/data/auth/auth_repository.dart';
+
+import '../../data/auth/dtos/register_request.dart';
 
 /// Manages the authentication state of the application that decides navigation.
 class AuthStateManager extends ChangeNotifier {
@@ -19,7 +22,7 @@ class AuthStateManager extends ChangeNotifier {
        _syncScheduler = syncCoordinator {
     _authEventSubscription = authEvents.stream.listen((event) {
       if (event == AuthEvent.loginNeeded) {
-        markUnauthenticated();
+        _handleLogout();
       }
     });
   }
@@ -27,6 +30,41 @@ class AuthStateManager extends ChangeNotifier {
   /// The current authentication state of the app. Defaults to [AuthState.none].
   AuthState _authState = .none;
   AuthState get authState => _authState;
+
+  Future<String?> register(RegisterRequest request) async {
+    final result = await _authRepo.register(request);
+
+    if (result.success) {
+      await _handleLoginSuccess();
+    }
+    return result.message;
+  }
+
+  Future<String?> login(LoginRequest request) async {
+    final result = await _authRepo.login(request);
+
+    if (result.success) {
+      await _handleLoginSuccess();
+    }
+    return result.message;
+  }
+
+  Future<void> logout() async {
+    await _authRepo.logout();
+    await _handleLogout();
+  }
+
+  Future<void> _handleLoginSuccess() async {
+    _authState = AuthState.authenticated;
+    notifyListeners();
+    await _syncScheduler.startBackgroundSync();
+  }
+
+  Future<void> _handleLogout() async {
+    _authState = AuthState.unauthenticated;
+    notifyListeners();
+    await _syncScheduler.stopBackgroundSync();
+  }
 
   /// Initializes the authentication state when the app starts.
   ///
@@ -42,6 +80,8 @@ class AuthStateManager extends ChangeNotifier {
       /// Try validating tokens with backend
       final validAuthState = await _authRepo.autoLogin();
 
+      if (validAuthState == null) return;
+
       if (validAuthState == AuthState.authenticated) {
         await _syncScheduler.startBackgroundSync();
       } else {
@@ -52,18 +92,6 @@ class AuthStateManager extends ChangeNotifier {
     }
 
     notifyListeners();
-  }
-
-  Future<void> markAuthenticated() async {
-    _authState = AuthState.authenticated;
-    notifyListeners();
-    await _syncScheduler.startBackgroundSync();
-  }
-
-  Future<void> markUnauthenticated() async {
-    _authState = AuthState.unauthenticated;
-    notifyListeners();
-    await _syncScheduler.stopBackgroundSync();
   }
 
   @override

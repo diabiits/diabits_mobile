@@ -1,4 +1,5 @@
 import 'package:diabits_mobile/ui/auth/login_screen.dart';
+import 'package:diabits_mobile/ui/health_connect/permission_gate.dart';
 import 'package:diabits_mobile/ui/manual_input/manual_input_screen.dart';
 import 'package:diabits_mobile/ui/shared/loading_screen.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +29,7 @@ class AuthGate extends StatelessWidget {
       case .unauthenticated:
         return const LoginScreen();
       case .authenticated:
-        return const ManualInputScreen();
+        return const PermissionGate();
     }
   }
 }

@@ -40,17 +40,16 @@ class DiabitsApp extends StatelessWidget {
           fillColor: Colors.grey[50],
           labelStyle: const TextStyle(color: charcoal),
           floatingLabelStyle: const TextStyle(color: charcoal),
-
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: .circular(12),
             borderSide: BorderSide(color: Colors.grey[300]!),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: .circular(12),
             borderSide: BorderSide(color: Colors.grey[300]!),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: .circular(12),
             borderSide: const BorderSide(color: charcoal, width: 1.5),
           ),
 
@@ -61,9 +60,9 @@ class DiabitsApp extends StatelessWidget {
             backgroundColor: primaryColor,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: .circular(12),
             ),
-            minimumSize: const Size.fromHeight(50),
+            minimumSize: const .fromHeight(50),
           ),
         ),
         snackBarTheme: SnackBarThemeData(backgroundColor: ternaryColor),

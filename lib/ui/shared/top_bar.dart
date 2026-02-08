@@ -1,4 +1,4 @@
-import 'package:diabits_mobile/data/auth/auth_repository.dart';
+import 'package:diabits_mobile/domain/auth/auth_state_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,11 +15,12 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
   /// confirmation dialog before logging out the user.
   @override
   Widget build(BuildContext context) {
-    final authRepo = context.read<AuthRepository>();
+    final authManager = context.read<AuthStateManager>();
 
     return AppBar(
       title: Image.asset("assets/wordmark_red.png", height: 40),
-      backgroundColor: const Color(0xffef88ad),
+      backgroundColor: Theme.of(context).colorScheme.secondary,
+      scrolledUnderElevation: 0,
       centerTitle: true,
       actions: [
         /// Logout button
@@ -46,7 +47,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
             );
 
             if (shouldLogout == true) {
-              await authRepo.logout();
+              await authManager.logout();
             }
           },
         ),

@@ -12,8 +12,4 @@ class HealthConnectConstants {
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.DISTANCE_DELTA,
   ];
-
-  /// The list of [HealthDataAccess] permissions required for the specified data types.
-  /// For this application, only read access is required.
-  static final permissions = types.map((_) => HealthDataAccess.READ).toList();
 }

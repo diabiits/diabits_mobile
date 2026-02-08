@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:provider/provider.dart';
 
-import '../manual_input_view_model.dart';
-
 /// A widget that allows the user to select a day for manual data entry.
 ///
 /// It displays the currently selected day and provides buttons to navigate to the previous or next day. It also allows picking a specific date from a calendar.
@@ -18,39 +16,45 @@ class DateSelector extends StatelessWidget {
   /// and a central button that displays the current date and opens a date picker on press.
   @override
   Widget build(BuildContext context) {
-    final selectedDay = context.select(
-      (ManualInputViewModel vm) => vm.selectedDate,
-    );
-    final modelView = context.read<ManualInputViewModel>();
+    final selectedDay = context.select((ManualInputViewModel vm) => vm.selectedDate);
+    //final vm = context.read<ManualInputViewModel>();
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Expanded(
-          flex: 10,
-          child: IconButton(
-            icon: const Icon(Icons.chevron_left, color: Colors.black54),
-            onPressed: () => _handleChangeDay(context, modelView, -1),
-          ),
-        ),
-        Expanded(
-          flex: 25,
-          child: TextButton(
-            onPressed: () => _pickDate(context, modelView),
-            child: Text(
-              _formatDate(selectedDay),
-              style: const TextStyle(fontSize: 20, color: Colors.black87),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: const BoxDecoration(
+        color: Color(0xffef88ad),
+        boxShadow: [BoxShadow(color: Color(0xffa53860), spreadRadius: 2, blurRadius: 6)],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 10,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_left, color: Colors.black54),
+              onPressed: () => _changeDay(context, -1),
             ),
           ),
-        ),
-        Expanded(
-          flex: 10,
-          child: IconButton(
-            icon: const Icon(Icons.chevron_right, color: Colors.black54),
-            onPressed: () => _handleChangeDay(context, modelView, 1),
+          Expanded(
+            flex: 25,
+            child: TextButton(
+              onPressed: () => _pickDate(context),
+              child: Text(
+                _formatDate(selectedDay),
+                style: const TextStyle(fontSize: 20, color: Colors.black87),
+              ),
+            ),
           ),
-        ),
-      ],
+          Expanded(
+            flex: 10,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_right, color: Colors.black54),
+              onPressed: () => _changeDay(context, 1),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -58,63 +62,48 @@ class DateSelector extends StatelessWidget {
   ///
   /// Returns "Today" for the current date, otherwise formats it as 'd MMMM y' (e.g., 11 January 2023).
   String _formatDate(DateTime day) {
-    final now = DateTime.now();
-    if (day.year == now.year && day.month == now.month && day.day == now.day) {
-      return "Today";
-    }
+    if (DateUtils.isSameDay(day, DateTime.now())) return 'Today';
     return intl.DateFormat('d MMMM y', intl.Intl.systemLocale).format(day);
   }
 
   /// Handles changing the day by a given number of days (e.g., +1 or -1).
   ///
-  /// Before changing the day, it checks for unsaved changes using [modelView.hasUnsavedChanges].
+  /// Before changing the day, it checks for unsaved changes using [vm.hasUnsavedChanges].
   /// If there are unsaved changes, it shows a confirmation dialog.
-  Future<void> _handleChangeDay(
-    BuildContext context,
-    ManualInputViewModel modelView,
-    int days,
-  ) async {
-    if (modelView.hasUnsavedChanges) {
-      final confirmed = await _showConfirmationDialog(context);
-      if (confirmed ?? false) {
-        modelView.changeDate(days);
-      }
-    } else {
-      modelView.changeDate(days);
+  Future<void> _changeDay(BuildContext context, int days) async {
+    final vm = context.read<ManualInputViewModel>();
+
+    if (vm.hasUnsavedChanges) {
+      final confirmed = await _confirmDiscardChanges(context);
+      if (confirmed != true) return;
     }
+
+    await vm.changeDate(days);
   }
 
-  /// Opens a date picker to allow the user to select a specific date.
-  ///
-  /// Similar to [_handleChangeDay], it checks for unsaved changes before showing the date picker.
-  /// If a new date is selected, it updates the view model.
-  Future<void> _pickDate(
-    BuildContext context,
-    ManualInputViewModel modelView,
-  ) async {
-    if (modelView.hasUnsavedChanges) {
-      final confirmed = await _showConfirmationDialog(context);
-      if (!(confirmed ?? false)) {
-        return;
-      }
+  Future<void> _pickDate(BuildContext context) async {
+    final vm = context.read<ManualInputViewModel>();
+
+    if (vm.hasUnsavedChanges) {
+      final confirmed = await _confirmDiscardChanges(context);
+      if (confirmed != true) return;
     }
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: modelView.selectedDate,
+      initialDate: vm.selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(DateTime.now().year + 1),
     );
 
-    if (picked != null) {
-      modelView.setSelectedDate(picked);
-    }
+    if (picked == null) return;
+    await vm.setSelectedDate(picked);
   }
 
   /// Shows a confirmation dialog to the user.
   ///
   /// This dialog warns the user about unsaved changes and asks for confirmation before discarding them.
-  Future<bool?> _showConfirmationDialog(BuildContext context) {
+  Future<bool?> _confirmDiscardChanges(BuildContext context) {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

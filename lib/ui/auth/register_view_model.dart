@@ -13,13 +13,8 @@ import '../../data/auth/dtos/register_request.dart';
 /// Invites can only be created by admins and are stored in the backend.
 class RegisterViewModel extends ChangeNotifier {
   final AuthStateManager _authManager;
-  final AuthRepository _authRepo;
 
-  RegisterViewModel({
-    required AuthStateManager authManager,
-    required AuthRepository authRepo,
-  }) : _authManager = authManager,
-       _authRepo = authRepo;
+  RegisterViewModel({required AuthStateManager authManager}) : _authManager = authManager;
 
   bool _isLoading = false;
   bool _passwordHidden = true;
@@ -48,7 +43,7 @@ class RegisterViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _authRepo.register(
+    final message = await _authManager.register(
       RegisterRequest(
         username: username.trim(),
         password: password,
@@ -58,11 +53,8 @@ class RegisterViewModel extends ChangeNotifier {
     );
 
     _isLoading = false;
-    if (result.success) {
-      await _authManager.markAuthenticated();
-    } else if (result.message != null) {
-      _snackMessage = result.message;
-    }
+    if (message?.isNotEmpty == true) _snackMessage = message;
     notifyListeners();
+
   }
 }

@@ -21,8 +21,8 @@ class ManualInputDto {
       id: json['id']?.toString(),
       type: type,
       dateFrom: DateTime.parse(json['startTime']),
-      medication: type == 'MEDICATION' && json['medication'] != null
-          ? MedicationValueInput.fromJson(json['medication']) //TODO json or json['medication']?
+      medication: type == 'MEDICATION'
+          ? MedicationValueInput.fromJson(json)
           : null,
       flow: json['flow'],
     );

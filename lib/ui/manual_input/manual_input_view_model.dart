@@ -21,25 +21,26 @@ class ManualInputViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  MedicationInput? _editingMedication;
-  MedicationInput? get editingMedication => _editingMedication;
+  MedicationInput? _editingMedicationId;
+  MedicationInput? get editingMedication => _editingMedicationId;
 
   int _loadToken = 0;
 
   void startEditing(MedicationInput medication) {
-    _editingMedication = medication;
+    _editingMedicationId = medication;
     notifyListeners();
   }
 
   void cancelEditing() {
-    _editingMedication = null;
+    _editingMedicationId = null;
     notifyListeners();
   }
 
-  void addMedication(String name, int amount, DateTime time) {
-    if (_editingMedication != null) {
-      medicationManager.updateMedication(_editingMedication!.id, name, amount, time);
-      _editingMedication = null;
+  //TODO In manager or here?
+  void saveMedication(String name, int amount, DateTime time) {
+    if (_editingMedicationId != null) {
+      medicationManager.updateById(_editingMedicationId!.id, name, amount, time);
+      _editingMedicationId = null;
     } else {
       medicationManager.add(name, amount, time);
     }
@@ -86,7 +87,7 @@ class ManualInputViewModel extends ChangeNotifier {
   }
 
   void removeMedicationAt(String id) {
-    medicationManager.removeAt(id);
+    medicationManager.removeById(id);
     notifyListeners();
   }
 
@@ -103,7 +104,7 @@ class ManualInputViewModel extends ChangeNotifier {
   void clear() {
     menstruationManager.clear();
     medicationManager.clear();
-    _editingMedication = null;
+    _editingMedicationId = null;
   }
 
   Future<void> submit() async {
@@ -113,31 +114,45 @@ class ManualInputViewModel extends ChangeNotifier {
     try {
       final futures = <Future>[];
 
+      // Medication deletes
       for (final id in medicationManager.medicationsToDelete) {
         futures.add(_inputRepo.deleteManualInput(id));
       }
 
+      // Menstruation delete
       final menstruationDeleteId = menstruationManager.idToDelete;
       if (menstruationDeleteId != null) {
         futures.add(_inputRepo.deleteManualInput(menstruationDeleteId));
       }
 
+      // Menstruation update
       final menstruationUpdate = menstruationManager.updateDto;
       if (menstruationUpdate != null) {
         futures.add(_inputRepo.updateManualInput(menstruationUpdate));
+      }
+
+      // Medication updates
+      for (final dto in medicationManager.buildUpdateRequest()) {
+        futures.add(_inputRepo.updateManualInput(dto));
       }
 
       if (futures.isNotEmpty) {
         await Future.wait(futures);
       }
 
+      // Create (new items)
       final request = _buildRequest();
       if (request.medications.isNotEmpty || request.menstruations.isNotEmpty) {
         await _inputRepo.submitManualInput(request);
       }
 
+      // Mark current state as persisted baseline
       menstruationManager.commit();
+      medicationManager.commit();
+
+      // Refresh from backend
       await loadDataForSelectedDate();
+
     } finally {
       _isLoading = false;
       notifyListeners();

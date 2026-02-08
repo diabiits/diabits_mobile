@@ -72,10 +72,12 @@ class AuthRepository {
   }
 
   /// Attempts to automatically log in the user by validating existing tokens.
-  Future<AuthState> autoLogin() async {
-    final response = await _client.get(Endpoints.checkToken);
+  Future<AuthState?> autoLogin() async {
+    final result = await _client.get(Endpoints.checkToken);
 
-    return response.success
+    if (result.statusCode == 503) return null;
+
+    return result.success
         ? AuthState.authenticated
         : AuthState.unauthenticated;
   }

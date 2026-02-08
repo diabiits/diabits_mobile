@@ -57,4 +57,18 @@ class MedicationInput {
       medication: MedicationValueInput(name: name, amount: amount),
     );
   }
+
+  MedicationInput copyWith({
+    String? name,
+    int? amount,
+    DateTime? time,
+  }) {
+    return MedicationInput._(
+      id: id,
+      name: name ?? this.name,
+      amount: amount ?? this.amount,
+      time: time ?? this.time,
+      isSavedInDatabase: isSavedInDatabase,
+    );
+  }
 }

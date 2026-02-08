@@ -1,64 +1,71 @@
 import 'package:diabits_mobile/domain/models/menstruation_input.dart';
 import '../../../data/manual_input/dtos/manual_input_dto.dart';
 
-/// Manages the state of menstruation data for the manual input screen.
+/// Manages menstruation state for the manual input feature.
 ///
-/// This class handles adding, updating, removing, and tracking changes to menstruation.
-/// It works with [ManualInputViewModel] to synchronize the state with the backend.
+/// Responsibilities:
+/// - Owns the current menstruation input for the selected date (or null if none).
+/// - Applies business defaults (e.g. default flow) when creating new entries.
+/// - Tracks changes relative to the last loaded/committed state so the UI can
+///   enable/disable saving and the ViewModel can build correct backend requests.
+/// - Produces the minimum set of backend operations:
+///   create (new), update (changed), delete (removed).
+///
+/// Non-responsibilities:
+/// - No UI concerns (no widgets, formatting, dialogs).
+/// - No networking or persistence (handled by repository via ViewModel).
 class MenstruationManager {
-  /// The current menstruation input. It can be null if the user is not menstruating.
+  static const String defaultFlow = 'LIGHT';
+
+  /// Current menstruation input for the selected date, or null when not menstruating.
   MenstruationInput? menstruation;
 
-  /// The original menstruation input when the data was loaded from the database.
-  /// Used to check if the input has been modified by the user.
-  MenstruationInput? _originalMenstruation;
+  /// Snapshot of the last committed state used for dirty tracking.
+  MenstruationInput? _original;
 
   /// A computed property that returns true if there are any unsaved changes.
   bool get isDirty {
-    if (_originalMenstruation != null && menstruation == null) return true; // Deleted
-    if (_originalMenstruation == null && menstruation != null) return true; // Created
-    if (_originalMenstruation != null && menstruation != null) {
-      return _originalMenstruation!.flow != menstruation!.flow; // Updated
-    }
-    return false; // No change
+    if (_original == null && menstruation == null) return false;
+    if (_original == null || menstruation == null) return true;
+    return _original!.flow != menstruation!.flow;
   }
 
   void loadFromDto(ManualInputDto? dto) {
-    if (dto != null) {
-      menstruation = MenstruationInput.fromDto(dto);
-      _originalMenstruation = MenstruationInput.fromDto(dto);
-    } else {
+    if (dto == null) {
       clear();
+    } else {
+      menstruation = MenstruationInput.fromDto(dto);
+      _original = menstruation;
     }
   }
 
   void setIsMenstruating(bool isMenstruating, DateTime selectedDate) {
-    if (isMenstruating && menstruation == null) {
-      menstruation = MenstruationInput(flow: 'LIGHT', dateFrom: selectedDate);
-    } else if (!isMenstruating && menstruation != null) {
+    if (isMenstruating) {
+      menstruation ??= MenstruationInput(flow: defaultFlow, dateFrom: selectedDate);
+      return;
+    } else {
       menstruation = null;
     }
   }
 
   void setFlow(String newFlow) {
-    if (menstruation != null) {
-      menstruation = menstruation!.copyWith(flow: newFlow);
-    }
+    if (menstruation == null) return;
+    menstruation = menstruation!.copyWith(flow: newFlow);
   }
 
-  String? get idToDelete => (isDirty && _originalMenstruation != null && menstruation == null)
-      ? _originalMenstruation!.id
-      : null;
+  String? get idToDelete =>
+      (isDirty && _original != null && menstruation == null) ? _original!.id : null;
 
-  ManualInputDto? get updateDto =>
-      (isDirty && _originalMenstruation != null && menstruation != null)
-      ? ManualInputDto(
-          id: _originalMenstruation!.id,
-          type: 'MENSTRUATION',
-          dateFrom: menstruation!.dateFrom,
-          flow: menstruation!.flow,
-        )
-      : null;
+  ManualInputDto? get updateDto {
+    if (!(isDirty && _original != null && menstruation != null)) return null;
+
+    return ManualInputDto(
+      id: _original!.id,
+      type: 'MENSTRUATION',
+      dateFrom: menstruation!.dateFrom,
+      flow: menstruation!.flow,
+    );
+  }
 
   List<ManualInputDto> buildCreateRequest() {
     if (isDirty && menstruation != null && !menstruation!.isSavedInDatabase) {
@@ -73,10 +80,10 @@ class MenstruationManager {
     return [];
   }
 
-  void commit() => _originalMenstruation = menstruation;
+  void commit() => _original = menstruation;
 
   void clear() {
     menstruation = null;
-    _originalMenstruation = null;
+    _original = null;
   }
 }

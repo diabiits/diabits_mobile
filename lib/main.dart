@@ -80,7 +80,6 @@ void main() async {
         ChangeNotifierProvider<LoginViewModel>(
           create: (context) => LoginViewModel(
             authManager: context.read<AuthStateManager>(),
-            authRepo: context.read<AuthRepository>(),
           ),
         ),
 
@@ -88,7 +87,6 @@ void main() async {
         ChangeNotifierProvider<RegisterViewModel>(
           create: (context) => RegisterViewModel(
             authManager: context.read<AuthStateManager>(),
-            authRepo: context.read<AuthRepository>(),
           ),
         ),
 

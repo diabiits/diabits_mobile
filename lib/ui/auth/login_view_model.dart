@@ -10,13 +10,8 @@ import 'package:flutter/cupertino.dart';
 /// for network requests and [AuthStateManager] for global session state.
 class LoginViewModel extends ChangeNotifier {
   final AuthStateManager _authManager;
-  final AuthRepository _authRepo;
 
-  LoginViewModel({
-    required AuthStateManager authManager,
-    required AuthRepository authRepo,
-  }) : _authManager = authManager,
-       _authRepo = authRepo;
+  LoginViewModel({required AuthStateManager authManager}) : _authManager = authManager;
 
   bool _isLoading = false;
   bool _passwordHidden = true;
@@ -41,25 +36,17 @@ class LoginViewModel extends ChangeNotifier {
   ///
   /// Updates [isLoading] during the request and triggers [AuthStateManager.markAuthenticated] upon success.
   /// If the request fails, updates [snackMessage] with the error details.
-  Future<void> submit({
-    required String username,
-    required String password,
-  }) async {
+  Future<void> submit({required String username, required String password}) async {
     if (_isLoading) return;
     _isLoading = true;
     notifyListeners();
 
-    final result = await _authRepo.login(
+    final message = await _authManager.login(
       LoginRequest(username: username.trim(), password: password),
     );
 
     _isLoading = false;
-    if (result.success) {
-      await _authManager.markAuthenticated();
-    }
-    else if (result.message != null) {
-      _snackMessage = result.message;
-    }
+    if (message?.isNotEmpty == true) _snackMessage = message;
     notifyListeners();
   }
 }
