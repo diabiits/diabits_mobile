@@ -7,9 +7,12 @@ import '../../manual_input_view_model.dart';
 import 'medication_form.dart';
 
 class MedicationList extends StatelessWidget {
-  final bool embedded;
+  final void Function(MedicationInput med) onEdit;
+  final void Function(String id) onDelete;
 
-  const MedicationList({super.key, this.embedded = false});
+  //final bool embedded;
+
+  const MedicationList({super.key, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -21,12 +24,12 @@ class MedicationList extends StatelessWidget {
     });
 
     if (meds.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 18),
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 18),
         child: Text(
           'No medications logged yet',
-          style: theme.textTheme.bodyMedium,
-          textAlign: TextAlign.center,
+          //style: theme.textTheme.bodyMedium,
+          textAlign: .center,
         ),
       );
     }
@@ -42,10 +45,22 @@ class MedicationList extends StatelessWidget {
         endIndent: 8,
         color: theme.dividerColor.withValues(alpha: 0.3),
       ),
-      itemBuilder: (context, index) {
+      itemBuilder: (_, index) {
         final med = meds[index];
 
         return Dismissible(
+          key: ValueKey(med.id),
+          direction: DismissDirection.startToEnd,
+          onDismissed: (_) => onDelete(med.id),
+          child: ListTile(
+            title: Text(med.name),
+            subtitle: Text('${med.amount} • ${DateFormat.Hm().format(med.time)}'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => onEdit(med),
+          ),
+        );
+
+        /*return Dismissible(
           key: ValueKey(med.id),
           direction: DismissDirection.startToEnd,
           background: Container(
@@ -54,7 +69,7 @@ class MedicationList extends StatelessWidget {
             color: theme.colorScheme.primary,
             child: const Icon(Icons.delete_forever, color: Colors.white),
           ),
-          onDismissed: (_) => context.read<ManualInputViewModel>().removeMedicationAt(med.id),
+          onDismissed: (_) => onDelete(med.id),
 
           //TODO Add isDirty check here as well?
           child: InkWell(
@@ -96,7 +111,7 @@ class MedicationList extends StatelessWidget {
               ),
             ),
           ),
-        );
+        );*/
       },
     );
   }

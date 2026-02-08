@@ -17,13 +17,12 @@ class DateSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedDay = context.select((ManualInputViewModel vm) => vm.selectedDate);
-    //final vm = context.read<ManualInputViewModel>();
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xffef88ad),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary,
         boxShadow: [BoxShadow(color: Color(0xffa53860), spreadRadius: 2, blurRadius: 6)],
       ),
       child: Row(
@@ -32,7 +31,7 @@ class DateSelector extends StatelessWidget {
           Expanded(
             flex: 10,
             child: IconButton(
-              icon: const Icon(Icons.chevron_left, color: Colors.black54),
+              icon: const Icon(Icons.chevron_left, color: Color(0xfff6f4f0)),
               onPressed: () => _changeDay(context, -1),
             ),
           ),
@@ -42,14 +41,18 @@ class DateSelector extends StatelessWidget {
               onPressed: () => _pickDate(context),
               child: Text(
                 _formatDate(selectedDay),
-                style: const TextStyle(fontSize: 20, color: Colors.black87),
+                style: const TextStyle(
+                  fontSize: 20,
+                  color: Color(0xfff6f4f0),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
           Expanded(
             flex: 10,
             child: IconButton(
-              icon: const Icon(Icons.chevron_right, color: Colors.black54),
+              icon: const Icon(Icons.chevron_right, color: Color(0xfff6f4f0)),
               onPressed: () => _changeDay(context, 1),
             ),
           ),

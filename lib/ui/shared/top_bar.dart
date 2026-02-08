@@ -18,14 +18,15 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
     final authManager = context.read<AuthStateManager>();
 
     return AppBar(
-      title: Image.asset("assets/wordmark_red.png", height: 40),
-      backgroundColor: Theme.of(context).colorScheme.secondary,
+      title: Image.asset("assets/wordmark_white.png", height: 44),
+      backgroundColor: Theme.of(context).colorScheme.primary,
       scrolledUnderElevation: 0,
       centerTitle: true,
       actions: [
         /// Logout button
         IconButton(
           icon: const Icon(Icons.logout),
+          color: Color(0xfff6f4f0),
           tooltip: 'Log out',
           onPressed: () async {
             final shouldLogout = await showDialog<bool>(

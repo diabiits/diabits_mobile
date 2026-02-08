@@ -6,6 +6,7 @@ import 'package:diabits_mobile/ui/shared/top_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/models/medication_input.dart';
 import '../shared/primary_button.dart';
 import 'manual_input_view_model.dart';
 
@@ -44,10 +45,9 @@ class _ManualInputScreenState extends State<ManualInputScreen> {
                   const MenstruationSection(),
                   const SizedBox(height: 12),
                   MedicationSection(
-                    onAdd: () {
-                      context.read<ManualInputViewModel>().cancelEditing();
-                      _openMedicationSheet(context);
-                    },
+                    onAdd: () => _openMedicationSheet(),
+                    onEdit: (med) => _openMedicationSheet(med),
+                    onDelete: (id) => context.read<ManualInputViewModel>().removeMedicationAt(id),
                   ),
                   const SizedBox(height: 120),
                 ],
@@ -79,17 +79,29 @@ class _ManualInputScreenState extends State<ManualInputScreen> {
     );
   }
 
-  //TODO Move to.. somewhere else?
-  Future<void> _openMedicationSheet(BuildContext context) {
-    context.read<ManualInputViewModel>().cancelEditing();
-    return showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      useSafeArea: true,
-      isScrollControlled: true,
-      builder: (_) =>
-          const Padding(padding: EdgeInsets.fromLTRB(16, 0, 16, 4), child: MedicationForm()),
-    );
+  void _openMedicationSheet([MedicationInput? med]) {
+    final vm = context.read<ManualInputViewModel>();
+
+    if (med != null) {
+      vm.startEditing(med);
+    } else {
+      vm.cancelEditing();
+    }
+
+    try {
+      showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        useSafeArea: true,
+        isScrollControlled: true,
+        builder: (_) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: MedicationForm(initial: med),
+        ),
+      );
+    } finally {
+      vm.cancelEditing();
+    }
   }
 
   Future<void> _submit(BuildContext context, ManualInputViewModel vm) async {

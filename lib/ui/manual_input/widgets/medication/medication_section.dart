@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../../../domain/models/medication_input.dart';
 import 'medication_list.dart';
 
 class MedicationSection extends StatelessWidget {
   final VoidCallback onAdd;
+  final void Function(MedicationInput med) onEdit;
+  final void Function(String id) onDelete;
 
-  const MedicationSection({super.key, required this.onAdd});
+  const MedicationSection({
+    super.key,
+    required this.onAdd,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,31 +28,19 @@ class MedicationSection extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: .stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(6, 6, 6, 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text('Medications', style: theme.textTheme.titleMedium),
-                  ),
-                  IconButton(
-                    tooltip: 'Add medication',
-                    onPressed: onAdd,
-                    icon: const Icon(Icons.add),
-                  ),
-                ],
-              ),
+            Row(
+              children: [
+                const Expanded(child: Text('Medications')),
+                IconButton(icon: const Icon(Icons.add), onPressed: onAdd),
+              ],
             ),
             Container(
-              decoration: BoxDecoration(
-                color: innerColor,
-                borderRadius: BorderRadius.circular(14),
-              ),
+              decoration: BoxDecoration(color: innerColor, borderRadius: BorderRadius.circular(14)),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: const MedicationList(embedded: true),
+                child: MedicationList(onEdit: onEdit, onDelete: onDelete),
               ),
             ),
           ],

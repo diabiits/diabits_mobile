@@ -5,10 +5,9 @@ import 'package:provider/provider.dart';
 import '../../../../domain/models/medication_input.dart';
 import '../../manual_input_view_model.dart';
 
-//TODO Blink of old amount value and current timestamp on edit.
 //TODO Fix modal being in safe area on bottom
 class MedicationForm extends StatefulWidget {
-  final MedicationInput? initial; //TODO get from vm?
+  final MedicationInput? initial;
 
   const MedicationForm({super.key, this.initial});
 
@@ -55,71 +54,73 @@ class _MedicationFormState extends State<MedicationForm> {
     final actionText = _isEdit ? 'Update' : 'Add';
     final actionIcon = _isEdit ? Icons.check : Icons.add;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Column(
-        mainAxisSize: .min,
-        crossAxisAlignment: .stretch,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: .min,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Medication name'),
-                  validator: FieldValidators.requiredValidator,
-                  textInputAction: .next,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _amountController,
-                  decoration: const InputDecoration(labelText: 'Amount'),
-                  keyboardType: .number,
-                  validator: FieldValidators.integerValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _timeController,
-                  readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Taken at',
-                    prefixIcon: Icon(Icons.access_time),
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Column(
+          mainAxisSize: .min,
+          crossAxisAlignment: .stretch,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 12),
+            Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: .min,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Medication name'),
+                    validator: FieldValidators.requiredValidator,
+                    textInputAction: .next,
                   ),
-                  onTap: _pickTime,
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _amountController,
+                    decoration: const InputDecoration(labelText: 'Amount'),
+                    keyboardType: .number,
+                    validator: FieldValidators.integerValidator,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _timeController,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Taken at',
+                      prefixIcon: Icon(Icons.access_time),
+                    ),
+                    onTap: _pickTime,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      context.read<ManualInputViewModel>().cancelEditing();
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _submit,
+                    icon: Icon(actionIcon),
+                    label: Text(actionText),
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () {
-                    context.read<ManualInputViewModel>().cancelEditing();
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _submit,
-                  icon: Icon(actionIcon),
-                  label: Text(actionText),
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
