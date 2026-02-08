@@ -51,6 +51,12 @@ class MedicationList extends StatelessWidget {
         return Dismissible(
           key: ValueKey(med.id),
           direction: DismissDirection.startToEnd,
+          background: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(left: 12),
+            color: theme.colorScheme.primary,
+            child: const Icon(Icons.delete, color: Color(0xfff6f4f0)),
+          ),
           onDismissed: (_) => onDelete(med.id),
           child: ListTile(
             title: Text(med.name),
