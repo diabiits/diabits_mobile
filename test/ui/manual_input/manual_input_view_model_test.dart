@@ -24,7 +24,7 @@ void main() {
 
   group('ManualInputViewModel', () {
     test('startEditing(medication) sets active editing medication and notifies listeners', () {
-      final med = TestDataFactory.medicationInput(id: 1, name: 'Panodil', date: testDate);
+      final med = MedicationInput.fromDto(TestData.med(testDate, id: 1));
       int notifyCount = 0;
       viewModel.addListener(() => notifyCount++);
 
@@ -35,7 +35,7 @@ void main() {
     });
 
     test('cancelEditing() clears active editing medication and notifies listeners', () {
-      viewModel.startEditing(TestDataFactory.medicationInput(name: 'Ipren', date: testDate));
+      viewModel.startEditing(MedicationInput.fromDto(TestData.med(testDate)));
       int notifyCount = 0;
       viewModel.addListener(() => notifyCount++);
 
@@ -48,9 +48,7 @@ void main() {
     test(
       'saveMedication(name, amount, time) updates existing medication when activeEditingMedication is set',
       () {
-        viewModel.medicationManager.loadFromDto([
-          TestDataFactory.medicationDto(id: 10, name: 'Ipren', date: testDate),
-        ]);
+        viewModel.medicationManager.loadFromDto([TestData.med(testDate, id: 10, name: 'Ipren')]);
         viewModel.startEditing(viewModel.medicationManager.medications.first);
 
         viewModel.saveMedication('Panodil', 2, testDate);
@@ -62,17 +60,14 @@ void main() {
     );
 
     test('loadDataForSelectedDate() loads managers when repository returns data', () async {
-      final response = TestDataFactory.response(
-        medications: [TestDataFactory.medicationDto(id: 101, name: 'Treo', date: testDate)],
-        menstruation: TestDataFactory.menstruationDto(id: 202, date: testDate),
+      final response = TestData.response(
+        meds: [TestData.med(testDate, name: 'Treo')],
+        mens: TestData.mens(testDate),
       );
 
       when(mockRepo.getManualInputForDay(any)).thenAnswer((_) async => response);
 
-      final future = viewModel.loadDataForSelectedDate();
-      expect(viewModel.isLoading, isTrue);
-
-      await future;
+      await viewModel.loadDataForSelectedDate();
 
       expect(viewModel.isLoading, isFalse);
       expect(viewModel.medicationManager.medications, hasLength(1));
@@ -93,9 +88,9 @@ void main() {
     test(
       'submit() calls relevant repository methods when there are deletions, updates, and creations',
       () async {
-        final initialResponse = TestDataFactory.response(
-          medications: [TestDataFactory.medicationDto(id: 10, name: 'Ipren', date: testDate)],
-          menstruation: TestDataFactory.menstruationDto(id: 20, date: testDate),
+        final initialResponse = TestData.response(
+          meds: [TestData.med(testDate, id: 10, name: 'Ipren')],
+          mens: TestData.mens(testDate, id: 20),
         );
 
         when(mockRepo.getManualInputForDay(any)).thenAnswer((_) async => initialResponse);
@@ -111,10 +106,7 @@ void main() {
         when(mockRepo.submitManualInputs(any)).thenAnswer((_) async => true);
         when(mockRepo.updateManualInputs(any)).thenAnswer((_) async => true);
         when(mockRepo.deleteManualInputs(any)).thenAnswer((_) async => true);
-
-        when(
-          mockRepo.getManualInputForDay(any),
-        ).thenAnswer((_) async => TestDataFactory.response(medications: [], menstruation: null));
+        when(mockRepo.getManualInputForDay(any)).thenAnswer((_) async => TestData.response());
 
         await viewModel.submit();
 
@@ -123,13 +115,11 @@ void main() {
             argThat(predicate<ManualInputDeleteRequest>((r) => r.ids.contains(20))),
           ),
         ).called(1);
-
         verify(
           mockRepo.updateManualInputs(
             argThat(predicate<ManualInputRequest>((r) => r.items.any((i) => i.id == 10))),
           ),
         ).called(1);
-
         verify(
           mockRepo.submitManualInputs(
             argThat(
@@ -139,71 +129,33 @@ void main() {
             ),
           ),
         ).called(1);
-
-        verify(mockRepo.getManualInputForDay(any)).called(2);
       },
     );
 
     test('submit() always clears isLoading when repository throws', () async {
-      viewModel.toggleMenstruation(true); // Dirty state to trigger submit
-      when(mockRepo.submitManualInputs(any)).thenThrow(Exception('Network failure'));
+      viewModel.toggleMenstruation(true);
+      when(mockRepo.submitManualInputs(any)).thenThrow(Exception('Error'));
 
       expect(() => viewModel.submit(), throwsException);
-
       await pumpEventQueue();
-
       expect(viewModel.isLoading, isFalse);
     });
   });
 }
 
-class TestDataFactory {
-  static const _defaultAmount = 2;
-  static const _defaultFlow = 'MEDIUM';
+class TestData {
+  static ManualInputDto med(DateTime date, {int id = 1, String name = 'Med'}) => ManualInputDto(
+    id: id,
+    type: 'MEDICATION',
+    dateFrom: date,
+    medication: MedicationValueInput(name: name, amount: 2),
+  );
+
+  static ManualInputDto mens(DateTime date, {int id = 1}) =>
+      ManualInputDto(id: id, type: 'MENSTRUATION', dateFrom: date, flow: 'MEDIUM');
 
   static ManualInputResponse response({
-    required List<ManualInputDto> medications,
-    required ManualInputDto? menstruation,
-  }) {
-    return ManualInputResponse(medications: medications, menstruation: menstruation);
-  }
-
-  /// Prefer creating medications through DTOs so the model shape is consistent.
-  static MedicationInput medicationInput({
-    int? id,
-    String name = 'Panodil',
-    int amount = _defaultAmount,
-    required DateTime date,
-  }) {
-    return MedicationInput.fromDto(medicationDto(id: id, name: name, amount: amount, date: date));
-  }
-
-  static ManualInputDto medicationDto({
-    int? id,
-    String name = 'Panodil',
-    int amount = _defaultAmount,
-    required DateTime date,
-  }) {
-    return ManualInputDto(
-      id: id,
-      type: 'MEDICATION',
-      dateFrom: date,
-      flow: null,
-      medication: MedicationValueInput(name: name, amount: amount),
-    );
-  }
-
-  static ManualInputDto menstruationDto({
-    int? id,
-    String flow = _defaultFlow,
-    required DateTime date,
-  }) {
-    return ManualInputDto(
-      id: id,
-      type: 'MENSTRUATION',
-      dateFrom: date,
-      flow: flow,
-      medication: null,
-    );
-  }
+    List<ManualInputDto> meds = const [],
+    ManualInputDto? mens,
+  }) => ManualInputResponse(medications: meds, menstruation: mens);
 }

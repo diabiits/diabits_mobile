@@ -5,7 +5,7 @@ import 'package:diabits_mobile/ui/shared/loading_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'domain/auth/auth_state_manager.dart';
+import '../../domain/auth/auth_state_manager.dart';
 
 /// A widget that acts as an authentication gate for the application.
 ///

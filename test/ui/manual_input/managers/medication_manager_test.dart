@@ -58,15 +58,15 @@ void main() {
       });
 
       test('Updating a loaded medication marks manager as dirty', () {
-        manager.update(101, 'Ipren', 2, testDate);
+        manager.update(101, 'Ipren', 5, testDate);
 
         expect(manager.isDirty, isTrue);
-        expect(manager.medications.first.amount, 2);
+        expect(manager.medications.first.amount, 5);
 
         final updates = manager.buildUpdateRequests();
         expect(updates, hasLength(1));
         expect(updates.first.id, 101);
-        expect(updates.first.medication?.amount, 2);
+        expect(updates.first.medication?.amount, 5);
       });
 
       test('Updating back to original values clears dirty state', () {
