@@ -3,136 +3,99 @@ import 'package:diabits_mobile/data/manual_input/dtos/medication_value_input.dar
 import '../../../data/manual_input/dtos/manual_input_dto.dart';
 import '../../../domain/models/medication_input.dart';
 
+/// Manages a collection of medication entries for a specific date.
+///
+/// Responsibilities:
+/// - Maintains the current list of [MedicationInput] items.
+/// - Tracks which database-backed items have been deleted ([toDeleteIds]).
+/// - Determines "Dirty" state by comparing current items against the [_snapshotById].
+/// - Prepares DTOs for batch operations (Create, Update, Delete).
 class MedicationManager {
+  /// The current working list of medications shown in the UI.
   List<MedicationInput> medications = [];
 
-  final Set<String> _toDelete = {};
-  List<String> get medicationsToDelete => List.unmodifiable(_toDelete);
+  /// IDs of medications that exist in the database but were removed by the user.
+  final Set<int> _toDeleteIds = {};
+  List<int> get toDeleteIds => List.unmodifiable(_toDeleteIds);
 
-  // Snapshot for diffing. Only contains database-backed items.
-  final Map<String, MedicationInput> _originalById = {};
+  /// A snapshot of medications as they exist in the database, used for diffing.
+  final Map<int, MedicationInput> _snapshotById = {};
 
+  /// Returns true if the user has added, removed, or modified any medications.
   bool get isDirty =>
-      _toDelete.isNotEmpty ||
+      _toDeleteIds.isNotEmpty ||
       medications.any((m) => !m.isSavedInDatabase) ||
-      medications.any(_isSavedAndChanged);
+      medications.any(_hasChangedSinceSnapshot);
 
-  // void loadFromDto(List<ManualInputDto> dtos) {
-  //   medications = dtos.map(MedicationInput.fromDto).toList();
-  //   _medicationsToDelete.clear();
-  // }
-
+  /// Populates the manager with fresh data from the database.
   void loadFromDto(List<ManualInputDto> dtos) {
     medications = dtos.map(MedicationInput.fromDto).toList();
-    _toDelete.clear();
+    _toDeleteIds.clear();
 
-    _originalById
+    _snapshotById
       ..clear()
       ..addEntries(medications.where((m) => m.isSavedInDatabase).map((m) => MapEntry(m.id, m)));
   }
 
+  /// Adds a new medication entry (not yet in database).
   void add(String name, int amount, DateTime time) {
     medications = [...medications, MedicationInput(name: name, amount: amount, time: time)];
   }
 
-  void removeById(String id) {
-    final med = medications.where((m) => m.id == id).firstOrNull;
+  /// Removes a medication from the list. If it was in the DB, tracks it for deletion.
+  void removeById(int id) {
+    final med = medications.where((m) => m.id == id).singleOrNull;
     if (med == null) return;
 
-    if (med.isSavedInDatabase) _toDelete.add(id);
+    if (med.isSavedInDatabase) _toDeleteIds.add(id);
     medications = medications.where((m) => m.id != id).toList();
   }
 
-  // void removeAt(String id) {
-  //   final med = medications.firstWhere((m) => m.id == id);
-  //   if (med.isSavedInDatabase) _medicationsToDelete.add(med.id);
-  //   medications = medications.where((m) => m.id != id).toList();
-  // }
-
-  void updateById(String id, String name, int amount, DateTime time) {
+  /// Updates the values of an existing entry in the current list.
+  void update(int id, String name, int amount, DateTime time) {
     final index = medications.indexWhere((m) => m.id == id);
     if (index == -1) return;
 
-    final old = medications[index];
-    final updated = old.copyWith(name: name, amount: amount, time: time);
+    final updated = medications[index].copyWith(name: name, amount: amount, time: time);
 
-    final copy = List<MedicationInput>.from(medications);
-    copy[index] = updated;
-    medications = copy;
+    final newList = List<MedicationInput>.from(medications);
+    newList[index] = updated;
+    medications = newList;
   }
 
-  // void updateMedication(String originalId, String name, int amount, DateTime time) {
-  //   final index = medications.indexWhere((m) => m.id == originalId);
-  //   if (index == -1) return;
-  //
-  //   final oldMed = medications[index];
-  //   if (oldMed.isSavedInDatabase) _medicationsToDelete.add(oldMed.id);
-  //
-  //   final newMed = MedicationInput(name: name, amount: amount, time: time);
-  //   final copy = List<MedicationInput>.from(medications);
-  //   copy[index] = newMed;
-  //   medications = copy;
-  // }
+  /// Returns DTOs for items created during this session.
+  List<ManualInputDto> buildCreateRequests() =>
+      medications.where((m) => !m.isSavedInDatabase).map((m) => m.toDto()).toList();
 
-  List<ManualInputDto> buildCreateRequest() {
-    return medications.where((m) => !m.isSavedInDatabase).map((m) => m.toDto()).toList();
+  /// Returns DTOs for database items that were modified.
+  List<ManualInputDto> buildUpdateRequests() {
+    return medications
+        .where(_hasChangedSinceSnapshot)
+        .map(
+          (m) => ManualInputDto(
+            id: m.id,
+            type: 'MEDICATION',
+            dateFrom: m.time,
+            medication: MedicationValueInput(name: m.name, amount: m.amount),
+          ),
+        )
+        .toList();
   }
 
-  List<ManualInputDto> buildUpdateRequest() {
-    final updates = <ManualInputDto>[];
-
-    for (final m in medications.where((m) => m.isSavedInDatabase)) {
-      if (!_isSavedAndChanged(m)) continue;
-
-      final medValue = MedicationValueInput(name: m.name, amount: m.amount);
-
-      updates.add(
-        ManualInputDto(
-          id: m.id,
-          type: 'MEDICATION',
-          dateFrom: m.time,
-          medication: medValue
-        ),
-      );
-    }
-
-    return updates;
-  }
-
-  void commit() {
-    _toDelete.clear();
-    _originalById
-      ..clear()
-      ..addEntries(
-        medications
-            .where((m) => m.isSavedInDatabase)
-            .map((m) => MapEntry(m.id, m)),
-      );
-  }
-
-  // void clear() {
-  //   medications = [];
-  //   _medicationsToDelete.clear();
-  // }
-
+  /// Resets the manager to an empty state.
   void clear() {
     medications = [];
-    _toDelete.clear();
-    _originalById.clear();
+    _toDeleteIds.clear();
+    _snapshotById.clear();
   }
 
-  bool _isSavedAndChanged(MedicationInput current) {
+  bool _hasChangedSinceSnapshot(MedicationInput current) {
     if (!current.isSavedInDatabase) return false;
-
-    final original = _originalById[current.id];
+    final original = _snapshotById[current.id];
     if (original == null) return false;
 
     return original.name != current.name ||
         original.amount != current.amount ||
         original.time != current.time;
   }
-}
-
-extension<T> on Iterable<T> {
-  T? get firstOrNull => isEmpty ? null : first;
 }

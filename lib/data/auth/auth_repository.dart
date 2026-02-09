@@ -2,10 +2,10 @@ import 'package:diabits_mobile/data/network/api_client.dart';
 import 'package:diabits_mobile/data/network/endpoints.dart';
 import 'package:diabits_mobile/domain/auth/auth_state_manager.dart';
 
-import 'dtos/auth_response.dart';
+import '../network/responses/auth_response.dart';
 import 'dtos/auth_result.dart';
-import 'dtos/login_request.dart';
-import 'dtos/register_request.dart';
+import '../network/requests/login_request.dart';
+import '../network/requests/register_request.dart';
 import 'token_storage.dart';
 
 /// A repository for handling authentication-related operations.

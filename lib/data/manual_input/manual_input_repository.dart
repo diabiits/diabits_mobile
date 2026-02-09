@@ -1,8 +1,8 @@
 import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import 'dtos/manual_input_dto.dart';
-import 'dtos/manual_input_request.dart';
-import 'dtos/manual_input_response.dart';
+import '../network/requests/manual_input_request.dart';
+import '../network/responses/manual_input_response.dart';
 
 /// A repository for handling manual input of health data.
 ///
@@ -23,20 +23,18 @@ class ManualInputRepository {
   }
 
   /// Submits a new manual input entry.
-  Future<bool> submitManualInput(ManualInputRequest req) async {
-    var result = await _client.post(Endpoints.manualInput, req.toJson());
+  Future<bool> submitManualInputs(ManualInputRequest req) async {
+    var result = await _client.post(Endpoints.manualInputBatch, req.toJson());
     return result.success;
   }
 
-  /// Updates an existing manual input entry.
-  Future<bool> updateManualInput(ManualInputDto dto) async {
-    final result = await _client.put(Endpoints.manualInput, dto.toJson());
+  Future<bool> updateManualInputs(ManualInputRequest req) async {
+    final result = await _client.put(Endpoints.manualInputBatch, req.toJson());
     return result.success;
   }
 
-  /// Deletes a manual input entry by its ID.
-  Future<bool> deleteManualInput(String id) async {
-    var result = await _client.delete("${Endpoints.manualInput}/$id");
+  Future<bool> deleteManualInputs(ManualInputDeleteRequest req) async {
+    var result = await _client.delete(Endpoints.manualInputBatch, body: req.toJson());
     return result.success;
   }
 }

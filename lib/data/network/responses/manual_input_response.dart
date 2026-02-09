@@ -1,4 +1,4 @@
-import 'manual_input_dto.dart';
+import '../../manual_input/dtos/manual_input_dto.dart';
 
 /// Represents the data transfer object for the response of a manual input query.
 ///

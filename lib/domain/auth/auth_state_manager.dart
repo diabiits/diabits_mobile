@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:diabits_mobile/data/auth/dtos/login_request.dart';
+import 'package:diabits_mobile/data/network/requests/login_request.dart';
 import 'package:diabits_mobile/data/health_connect/sync_scheduler.dart';
 import 'package:diabits_mobile/domain/auth/auth_event_broadcaster.dart';
 import 'package:flutter/material.dart';
 
 import 'package:diabits_mobile/data/auth/auth_repository.dart';
 
-import '../../data/auth/dtos/register_request.dart';
+import '../../data/network/requests/register_request.dart';
 
 /// Manages the authentication state of the application that decides navigation.
 class AuthStateManager extends ChangeNotifier {

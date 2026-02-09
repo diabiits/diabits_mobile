@@ -1,3 +1,4 @@
+import 'package:diabits_mobile/ui/shared/section_card.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/medication_input.dart';
@@ -6,7 +7,7 @@ import 'medication_list.dart';
 class MedicationSection extends StatelessWidget {
   final VoidCallback onAdd;
   final void Function(MedicationInput med) onEdit;
-  final void Function(String id) onDelete;
+  final void Function(int id) onDelete;
 
   const MedicationSection({
     super.key,
@@ -19,32 +20,27 @@ class MedicationSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final outerColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.65);
-    final innerColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.40);
-
-    return Material(
-      color: outerColor,
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: .stretch,
-          children: [
-            Row(
-              children: [
-                const Expanded(child: Text('Medications')),
-                IconButton(icon: const Icon(Icons.add), onPressed: onAdd),
-              ],
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: .stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text('Medications', style: theme.textTheme.titleMedium)),
+              IconButton(icon: const Icon(Icons.add), onPressed: onAdd),
+            ],
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: SectionCard.innerColor(context),
+              borderRadius: BorderRadius.circular(14),
             ),
-            Container(
-              decoration: BoxDecoration(color: innerColor, borderRadius: BorderRadius.circular(14)),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: MedicationList(onEdit: onEdit, onDelete: onDelete),
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: MedicationList(onEdit: onEdit, onDelete: onDelete),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

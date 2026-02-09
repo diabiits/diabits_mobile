@@ -15,6 +15,9 @@ import 'data/manual_input/manual_input_repository.dart';
 import 'data/network/api_client.dart';
 import 'domain/auth/auth_state_manager.dart';
 
+//TODO Documentation
+//TODO Tests
+
 /// Entry point of the Diabits application.
 ///
 /// This function initializes essential system bindings, loads environment configurations,

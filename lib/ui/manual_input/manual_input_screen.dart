@@ -47,7 +47,7 @@ class _ManualInputScreenState extends State<ManualInputScreen> {
                   MedicationSection(
                     onAdd: () => _openMedicationSheet(),
                     onEdit: (med) => _openMedicationSheet(med),
-                    onDelete: (id) => context.read<ManualInputViewModel>().removeMedicationAt(id),
+                    onDelete: (id) => context.read<ManualInputViewModel>().deleteMedication(id),
                   ),
                   const SizedBox(height: 120),
                 ],
@@ -88,20 +88,16 @@ class _ManualInputScreenState extends State<ManualInputScreen> {
       vm.cancelEditing();
     }
 
-    try {
-      showModalBottomSheet<void>(
-        context: context,
-        showDragHandle: true,
-        useSafeArea: true,
-        isScrollControlled: true,
-        builder: (_) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: MedicationForm(initial: med),
-        ),
-      );
-    } finally {
-      vm.cancelEditing();
-    }
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: MedicationForm(initial: med),
+      ),
+    );
   }
 
   Future<void> _submit(BuildContext context, ManualInputViewModel vm) async {

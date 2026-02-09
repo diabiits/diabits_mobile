@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 
 import '../network/api_client.dart';
-import 'dtos/health_connect_request.dart';
-import 'dtos/last_sync_response.dart';
+import '../network/requests/health_connect_request.dart';
+import '../network/responses/last_sync_response.dart';
 import 'permission_handler.dart';
 
 /// A class responsible for syncing Health Connect data with the backend.

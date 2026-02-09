@@ -2,13 +2,14 @@ import 'package:diabits_mobile/data/manual_input/dtos/manual_input_dto.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/manual_input/dtos/medication_value_input.dart';
+import 'manual_input_ids.dart';
 
 /// Represents a single medication intake record.
 ///
 /// This model is used in the domain layer to handle medication data, separating
 /// it from the data transfer objects (DTOs) used for API communication.
 class MedicationInput {
-  final String id;
+  final int id;
   final String name;
   final int amount;
   final DateTime time;
@@ -22,7 +23,7 @@ class MedicationInput {
     required this.name,
     required this.amount,
     required this.time,
-  })  : id = const Uuid().v4(),
+  })  : id = ManualInputIds.next(),
         isSavedInDatabase = false;
 
   /// Creates a [MedicationInput] instance with a specified ID and save status.

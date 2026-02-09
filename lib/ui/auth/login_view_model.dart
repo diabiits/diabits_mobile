@@ -1,5 +1,5 @@
 import 'package:diabits_mobile/data/auth/auth_repository.dart';
-import 'package:diabits_mobile/data/auth/dtos/login_request.dart';
+import 'package:diabits_mobile/data/network/requests/login_request.dart';
 import 'package:diabits_mobile/domain/auth/auth_state_manager.dart';
 import 'package:flutter/cupertino.dart';
 

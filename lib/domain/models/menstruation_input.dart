@@ -1,12 +1,14 @@
 import 'package:diabits_mobile/data/manual_input/dtos/manual_input_dto.dart';
 import 'package:uuid/uuid.dart';
 
+import 'manual_input_ids.dart';
+
 /// Represents a single menstruation data record for a specific day.
 ///
 /// This model is used in the domain layer to handle menstruation data, separating
 /// it from the data transfer objects (DTOs) used for API communication.
 class MenstruationInput {
-  final String id;
+  final int id;
   final String flow;
   final DateTime dateFrom;
 
@@ -20,8 +22,8 @@ class MenstruationInput {
   MenstruationInput({
     required this.flow,
     required this.dateFrom,
-  })  : id = const Uuid().v4(),
-        isSavedInDatabase = false;
+  })  : id = ManualInputIds.next(),
+      isSavedInDatabase = false;
 
   /// Creates a [MenstruationInput] instance with a specified ID and save status.
   ///

@@ -6,7 +6,7 @@ import 'medication_value_input.dart';
 /// communicating with the backend. It can represent different types of manual
 /// data, such as medication or menstruation.
 class ManualInputDto {
-  final String? id;
+  final int? id;
   final String type;
   final DateTime dateFrom;
   final MedicationValueInput? medication;
@@ -18,7 +18,7 @@ class ManualInputDto {
     final String type = json['type'];
 
     return ManualInputDto(
-      id: json['id']?.toString(),
+      id: json['id'],
       type: type,
       dateFrom: DateTime.parse(json['startTime']),
       medication: type == 'MEDICATION'

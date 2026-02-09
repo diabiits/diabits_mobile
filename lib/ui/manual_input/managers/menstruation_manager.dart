@@ -23,22 +23,6 @@ class MenstruationManager {
   /// Snapshot of the last committed state used for dirty tracking.
   MenstruationInput? _original;
 
-  /// A computed property that returns true if there are any unsaved changes.
-  bool get isDirty {
-    if (_original == null && menstruation == null) return false;
-    if (_original == null || menstruation == null) return true;
-    return _original!.flow != menstruation!.flow;
-  }
-
-  void loadFromDto(ManualInputDto? dto) {
-    if (dto == null) {
-      clear();
-    } else {
-      menstruation = MenstruationInput.fromDto(dto);
-      _original = menstruation;
-    }
-  }
-
   void setIsMenstruating(bool isMenstruating, DateTime selectedDate) {
     if (isMenstruating) {
       menstruation ??= MenstruationInput(flow: defaultFlow, dateFrom: selectedDate);
@@ -53,12 +37,32 @@ class MenstruationManager {
     menstruation = menstruation!.copyWith(flow: newFlow);
   }
 
-  String? get idToDelete =>
+  void loadFromDto(ManualInputDto? dto) {
+    if (dto == null) {
+      clear();
+    } else {
+      menstruation = MenstruationInput.fromDto(dto);
+      _original = menstruation;
+    }
+  }
+
+  void clear() {
+    menstruation = null;
+    _original = null;
+  }
+
+  // Computed properties
+  bool get isDirty {
+    if (_original == null && menstruation == null) return false;
+    if (_original == null || menstruation == null) return true;
+    return _original!.flow != menstruation!.flow;
+  }
+
+  int? get idToDelete =>
       (isDirty && _original != null && menstruation == null) ? _original!.id : null;
 
   ManualInputDto? get updateDto {
     if (!(isDirty && _original != null && menstruation != null)) return null;
-
     return ManualInputDto(
       id: _original!.id,
       type: 'MENSTRUATION',
@@ -67,23 +71,14 @@ class MenstruationManager {
     );
   }
 
-  List<ManualInputDto> buildCreateRequest() {
+  ManualInputDto? get createDto {
     if (isDirty && menstruation != null && !menstruation!.isSavedInDatabase) {
-      return [
-        ManualInputDto(
-          type: 'MENSTRUATION',
-          dateFrom: menstruation!.dateFrom,
-          flow: menstruation!.flow,
-        ),
-      ];
+      return ManualInputDto(
+        type: 'MENSTRUATION',
+        dateFrom: menstruation!.dateFrom,
+        flow: menstruation!.flow,
+      );
     }
-    return [];
-  }
-
-  void commit() => _original = menstruation;
-
-  void clear() {
-    menstruation = null;
-    _original = null;
+    return null;
   }
 }

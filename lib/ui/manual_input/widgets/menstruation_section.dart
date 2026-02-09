@@ -1,3 +1,4 @@
+import 'package:diabits_mobile/ui/shared/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,50 +16,40 @@ class MenstruationSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final isMenstruating = context.select<ManualInputViewModel, bool>(
       (vm) => vm.menstruationManager.menstruation != null,
     );
-
     final currentFlow = context.select<ManualInputViewModel, String?>(
       (vm) => vm.menstruationManager.menstruation?.flow,
     );
 
-    //TODO Move to theme
-    final outerColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.65);
-    final innerColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.40);
+    final theme = Theme.of(context);
 
-    return Material(
-      color: outerColor,
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: .stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(6),
-              child: Row(
-                children: [
-                  Expanded(child: Text('Menstruation', style: theme.textTheme.titleMedium)),
-                  Switch.adaptive(
-                    value: isMenstruating,
-                    onChanged: (value) =>
-                        context.read<ManualInputViewModel>().setIsMenstruating(value),
-                  ),
-                ],
-              ),
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: .stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(6),
+            child: Row(
+              children: [
+                Expanded(child: Text('Menstruation', style: theme.textTheme.titleMedium)),
+                Switch.adaptive(
+                  value: isMenstruating,
+                  onChanged: (value) =>
+                      context.read<ManualInputViewModel>().toggleMenstruation(value),
+                ),
+              ],
             ),
-            if (isMenstruating && currentFlow != null)
-              _FlowDropdown(
-                value: currentFlow,
-                backgroundColor: innerColor,
-                textStyle: theme.textTheme.bodyMedium,
-                onChanged: (value) => context.read<ManualInputViewModel>().setFlow(value),
-              ),
-          ],
-        ),
+          ),
+          if (isMenstruating && currentFlow != null)
+            _FlowDropdown(
+              value: currentFlow,
+              backgroundColor: SectionCard.innerColor(context),
+              textStyle: theme.textTheme.bodyMedium,
+              onChanged: (value) => context.read<ManualInputViewModel>().updateMenstruationFlow(value),
+            ),
+        ],
       ),
     );
   }

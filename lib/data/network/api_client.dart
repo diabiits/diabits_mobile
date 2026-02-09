@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../../domain/auth/auth_event_broadcaster.dart';
-import '../auth/dtos/auth_response.dart';
+import 'responses/auth_response.dart';
 import '../auth/token_storage.dart';
 import 'dtos/api_result.dart';
 import 'endpoints.dart';
@@ -42,9 +42,13 @@ class ApiClient {
     );
   }
 
-  Future<ApiResult> delete(String path) {
+  Future<ApiResult> delete(String path, {Object? body}) {
     return _performRequest(
-      () async => _httpClient.delete(_buildUri(path), headers: await _buildHeaders()),
+      () async => _httpClient.delete(
+        _buildUri(path),
+        headers: await _buildHeaders(),
+        body: jsonEncode(body),
+      ),
     );
   }
 

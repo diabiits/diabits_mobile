@@ -6,27 +6,20 @@ class Endpoints {
   // Health Data Endpoints
   /// Endpoint for submitting health data from Health Connect.
   static const healthConnect = "/HealthData/healthConnect";
-
   /// Endpoint for submitting and retrieving manual health data entries.
   static const manualInput = "/HealthData/manual";
+  static const manualInputBatch = "/HealthData/manual/batch";
 
   // User Endpoints
   /// Endpoint for getting the last sync timestamp for a user.
   static const lastSync = "/User/lastSync";
 
   // Authentication Endpoints
-  /// Endpoint for user login.
   static const login = "/Auth/login";
-
-  /// Endpoint for user registration.
   static const register = "/Auth/register";
-
-  /// Endpoint for user logout.
   static const logout = "/Auth/logout";
-
   /// Endpoint for validating the current access token.
   static const checkToken = "/Auth/checkToken";
-
   /// Endpoint for refreshing an expired access token.
   static const refreshToken = "/Auth/refreshToken";
 }

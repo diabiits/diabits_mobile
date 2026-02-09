@@ -1,4 +1,4 @@
-import 'package:diabits_mobile/data/manual_input/dtos/manual_input_request.dart';
+import 'package:diabits_mobile/data/network/requests/manual_input_request.dart';
 import 'package:diabits_mobile/data/manual_input/manual_input_repository.dart';
 import 'package:flutter/material.dart';
 
@@ -6,6 +6,13 @@ import '../../domain/models/medication_input.dart';
 import 'managers/medication_manager.dart';
 import 'managers/menstruation_manager.dart';
 
+/// Coordinates the state for the Manual Input screen.
+///
+/// Responsibilities:
+/// - Manages UI-specific state (Loading indicators, Selected Date).
+/// - Manages the "Editing" context (which item is currently focused).
+/// - Orchestrates multiple [Managers] to perform a unified [submit] operation.
+/// - Communicates with the [ManualInputRepository] for data I/O.
 class ManualInputViewModel extends ChangeNotifier {
   final ManualInputRepository _inputRepo;
   final MenstruationManager menstruationManager = MenstruationManager();
@@ -16,53 +23,55 @@ class ManualInputViewModel extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
   DateTime get selectedDate => _selectedDate;
 
-  bool get hasUnsavedChanges => menstruationManager.isDirty || medicationManager.isDirty;
-
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  MedicationInput? _editingMedicationId;
-  MedicationInput? get editingMedication => _editingMedicationId;
+  /// The medication currently being edited in the form, if any.
+  MedicationInput? _activeEditingMedication;
+  MedicationInput? get activeEditingMedication => _activeEditingMedication;
 
+  /// Global check if any part of the screen has unsaved changes.
+  bool get hasUnsavedChanges => menstruationManager.isDirty || medicationManager.isDirty;
+
+  /// Keep track of which load operation is currently in progress.
   int _loadToken = 0;
 
   void startEditing(MedicationInput medication) {
-    _editingMedicationId = medication;
+    _activeEditingMedication = medication;
     notifyListeners();
   }
 
   void cancelEditing() {
-    _editingMedicationId = null;
+    _activeEditingMedication = null;
     notifyListeners();
   }
 
-  //TODO In manager or here?
+  /// High-level logic to decide whether to add or update an item.
   void saveMedication(String name, int amount, DateTime time) {
-    if (_editingMedicationId != null) {
-      medicationManager.updateById(_editingMedicationId!.id, name, amount, time);
-      _editingMedicationId = null;
+    if (_activeEditingMedication != null) {
+      medicationManager.update(_activeEditingMedication!.id, name, amount, time);
+      _activeEditingMedication = null;
     } else {
       medicationManager.add(name, amount, time);
     }
     notifyListeners();
   }
 
+  /// Fetches data for the current [selectedDate] and updates managers.
   Future<void> loadDataForSelectedDate() async {
     final token = ++_loadToken;
-
     _isLoading = true;
     notifyListeners();
 
     try {
       final response = await _inputRepo.getManualInputForDay(_selectedDate);
-
       if (token != _loadToken) return;
 
       if (response != null) {
         menstruationManager.loadFromDto(response.menstruation);
         medicationManager.loadFromDto(response.medications);
       } else {
-        clear();
+        clearManagers();
       }
     } finally {
       if (token == _loadToken) {
@@ -72,41 +81,7 @@ class ManualInputViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> setSelectedDate(DateTime newDate) async {
-    _selectedDate = newDate;
-    clear();
-    notifyListeners();
-    await loadDataForSelectedDate();
-  }
-
-  Future<void> changeDate(int days) async {
-    _selectedDate = _selectedDate.add(Duration(days: days));
-    clear();
-    notifyListeners();
-    await loadDataForSelectedDate();
-  }
-
-  void removeMedicationAt(String id) {
-    medicationManager.removeById(id);
-    notifyListeners();
-  }
-
-  void setIsMenstruating(bool isMenstruating) {
-    menstruationManager.setIsMenstruating(isMenstruating, selectedDate);
-    notifyListeners();
-  }
-
-  void setFlow(String value) {
-    menstruationManager.setFlow(value);
-    notifyListeners();
-  }
-
-  void clear() {
-    menstruationManager.clear();
-    medicationManager.clear();
-    _editingMedicationId = null;
-  }
-
+  /// Pushes all changes from managers to the backend.
   Future<void> submit() async {
     _isLoading = true;
     notifyListeners();
@@ -114,55 +89,70 @@ class ManualInputViewModel extends ChangeNotifier {
     try {
       final futures = <Future>[];
 
-      // Medication deletes
-      for (final id in medicationManager.medicationsToDelete) {
-        futures.add(_inputRepo.deleteManualInput(id));
+      final deletions = [
+        ...medicationManager.toDeleteIds,
+        if (menstruationManager.idToDelete != null) menstruationManager.idToDelete!,
+      ];
+      if (deletions.isNotEmpty) {
+        futures.add(_inputRepo.deleteManualInputs(ManualInputDeleteRequest(ids: deletions)));
       }
 
-      // Menstruation delete
-      final menstruationDeleteId = menstruationManager.idToDelete;
-      if (menstruationDeleteId != null) {
-        futures.add(_inputRepo.deleteManualInput(menstruationDeleteId));
+      final updates = [
+        ...medicationManager.buildUpdateRequests(),
+        if (menstruationManager.updateDto != null) menstruationManager.updateDto!,
+      ];
+      if (updates.isNotEmpty) {
+        futures.add(_inputRepo.updateManualInputs(ManualInputRequest(items: updates)));
       }
 
-      // Menstruation update
-      final menstruationUpdate = menstruationManager.updateDto;
-      if (menstruationUpdate != null) {
-        futures.add(_inputRepo.updateManualInput(menstruationUpdate));
+      final creations = [
+        ...medicationManager.buildCreateRequests(),
+        if (menstruationManager.createDto != null) menstruationManager.createDto!,
+      ];
+      if (creations.isNotEmpty) {
+        futures.add(_inputRepo.submitManualInputs(ManualInputRequest(items: creations)));
       }
 
-      // Medication updates
-      for (final dto in medicationManager.buildUpdateRequest()) {
-        futures.add(_inputRepo.updateManualInput(dto));
-      }
-
-      if (futures.isNotEmpty) {
-        await Future.wait(futures);
-      }
-
-      // Create (new items)
-      final request = _buildRequest();
-      if (request.medications.isNotEmpty || request.menstruations.isNotEmpty) {
-        await _inputRepo.submitManualInput(request);
-      }
-
-      // Mark current state as persisted baseline
-      menstruationManager.commit();
-      medicationManager.commit();
+      if (futures.isNotEmpty) await Future.wait(futures);
 
       // Refresh from backend
       await loadDataForSelectedDate();
-
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  ManualInputRequest _buildRequest() {
-    return ManualInputRequest(
-      medications: medicationManager.buildCreateRequest(),
-      menstruations: menstruationManager.buildCreateRequest(),
-    );
+  // Navigation / Date methods
+  Future<void> setSelectedDate(DateTime newDate) async {
+    _selectedDate = newDate;
+    _isLoading = true;
+    notifyListeners();
+    await loadDataForSelectedDate();
+  }
+
+  Future<void> changeDate(int days) async =>
+      await setSelectedDate(_selectedDate.add(Duration(days: days)));
+
+  // Manager related passthrough methods
+  void deleteMedication(int id) {
+    medicationManager.removeById(id);
+    notifyListeners();
+  }
+
+  void toggleMenstruation(bool isMenstruating) {
+    menstruationManager.setIsMenstruating(isMenstruating, selectedDate);
+    notifyListeners();
+  }
+
+  void updateMenstruationFlow(String value) {
+    menstruationManager.setFlow(value);
+    notifyListeners();
+  }
+
+  void clearManagers() {
+    menstruationManager.clear();
+    medicationManager.clear();
+    _activeEditingMedication = null;
   }
 }

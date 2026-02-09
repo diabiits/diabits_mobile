@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../../../domain/models/medication_input.dart';
 import '../../manual_input_view_model.dart';
 
-//TODO Fix modal being in safe area on bottom
 class MedicationForm extends StatefulWidget {
   final MedicationInput? initial;
 
