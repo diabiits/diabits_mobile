@@ -23,20 +23,15 @@ class PermissionHandler {
     } catch (e) {
       return false;
     }
+    bool healthPermissionsGranted = await _health.hasPermissions(HealthConnectConstants.types) ?? false;
 
-    final healthPermissionsGranted = await _health.requestAuthorization(
-      HealthConnectConstants.types,
-      permissions: HealthConnectConstants.permissions,
-    );
+    if (!healthPermissionsGranted) {
+      healthPermissionsGranted = await _health.requestAuthorization(HealthConnectConstants.types);
+    }
 
-    final historyPermissionsGranted =
-    await _health.requestHealthDataHistoryAuthorization();
-    final backgroundPermissionsGranted =
-    await _health.requestHealthDataInBackgroundAuthorization();
+    final backgroundPermissionsGranted = await _health.requestHealthDataInBackgroundAuthorization();
 
-    return healthPermissionsGranted &&
-        historyPermissionsGranted &&
-        backgroundPermissionsGranted;
+    return healthPermissionsGranted && backgroundPermissionsGranted;
   }
 
   /// Initializes the Health Connect SDK and ensures it is available.

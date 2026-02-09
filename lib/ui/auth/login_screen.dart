@@ -3,7 +3,7 @@ import 'package:diabits_mobile/ui/shared/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../domain/auth/field_validators.dart';
+import '../shared/field_validators.dart';
 import 'login_view_model.dart';
 
 /// Provides a user interface for authenticating existing users.

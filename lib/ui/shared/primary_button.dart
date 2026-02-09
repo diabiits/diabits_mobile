@@ -9,29 +9,26 @@ class PrimaryButton extends StatefulWidget {
     super.key,
     required this.onPressed,
     required this.isLoading,
-    required this.text
+    required this.text,
   });
 
   @override
   State<PrimaryButton> createState() => _PrimaryButtonState();
 }
 
-class _PrimaryButtonState extends State<PrimaryButton>
-    with SingleTickerProviderStateMixin {
+class _PrimaryButtonState extends State<PrimaryButton> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _shimmerAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500));
 
-    _shimmerAnimation = Tween<double>(begin: -1.0, end: 2.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
-    );
+    _shimmerAnimation = Tween<double>(
+      begin: -1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine));
 
     if (widget.isLoading) _controller.repeat();
   }
@@ -50,16 +47,18 @@ class _PrimaryButtonState extends State<PrimaryButton>
     final primaryColor = theme.colorScheme.primary;
 
     return Center(
-      child: SizedBox(
+      child: Container(
         width: MediaQuery.of(context).size.width * 0.8,
         height: 50,
+        decoration: BoxDecoration(
+          borderRadius: .circular(12),
+          boxShadow: [
+            BoxShadow(color: Color(0xcc250000).withAlpha(100), spreadRadius: 2, blurRadius: 8, offset: Offset(1, 1)),
+          ],
+        ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            disabledBackgroundColor: Color.lerp(
-              primaryColor,
-              Colors.black,
-              0.1,
-            ),
+            disabledBackgroundColor: Color.lerp(primaryColor, Colors.black, 0.1),
             disabledForegroundColor: Colors.white,
             elevation: widget.isLoading ? 0 : 2,
           ),
@@ -68,10 +67,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
               ? _buildShimmeringText(theme.colorScheme.onPrimary)
               : Text(
                   widget.text,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
         ),
       ),
@@ -94,7 +90,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
                 textColor.withAlpha(128),
                 textColor,
                 textColor.withAlpha(128),
-                textColor.withAlpha(128)
+                textColor.withAlpha(128),
               ],
               transform: _SlidingGradientTransform(slidePercent: _shimmerAnimation.value),
             ).createShader(bounds);

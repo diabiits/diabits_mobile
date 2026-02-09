@@ -1,5 +1,6 @@
 import 'dart:async';
 
+//TODO Add message as passable parameter to AuthEvent
 /// Simple event bus for broadcasting authentication-related events.
 /// This allows different parts of the app to communicate about global transient events.
 class AuthEvents {

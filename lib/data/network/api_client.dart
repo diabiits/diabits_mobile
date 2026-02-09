@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../../domain/auth/auth_event_broadcaster.dart';
-import '../auth/dtos/auth_response.dart';
+import 'responses/auth_response.dart';
 import '../auth/token_storage.dart';
 import 'dtos/api_result.dart';
 import 'endpoints.dart';
@@ -23,38 +23,32 @@ class ApiClient {
 
   Future<ApiResult> get(String path, {Map<String, String>? params}) {
     return _performRequest(
-      () async => _httpClient.get(
-        _buildUri(path, params),
-        headers: await _buildHeaders(),
-      ),
+      () async => _httpClient.get(_buildUri(path, params), headers: await _buildHeaders()),
     );
   }
 
   Future<ApiResult> post(String path, Object? body, {Duration? timeout}) {
     return _performRequest(
-      () async => _httpClient.post(
-        _buildUri(path),
-        headers: await _buildHeaders(),
-        body: jsonEncode(body),
-      ),
+      () async =>
+          _httpClient.post(_buildUri(path), headers: await _buildHeaders(), body: jsonEncode(body)),
       timeout: timeout ?? _defaultTimeout,
     );
   }
 
   Future<ApiResult> put(String path, Object? body) {
     return _performRequest(
-      () async => _httpClient.put(
+      () async =>
+          _httpClient.put(_buildUri(path), headers: await _buildHeaders(), body: jsonEncode(body)),
+    );
+  }
+
+  Future<ApiResult> delete(String path, {Object? body}) {
+    return _performRequest(
+      () async => _httpClient.delete(
         _buildUri(path),
         headers: await _buildHeaders(),
         body: jsonEncode(body),
       ),
-    );
-  }
-
-  Future<ApiResult> delete(String path) {
-    return _performRequest(
-      () async =>
-          _httpClient.delete(_buildUri(path), headers: await _buildHeaders()),
     );
   }
 
@@ -68,7 +62,7 @@ class ApiClient {
       response = await request().timeout(timeout);
     } on TimeoutException {
       authEvents.add(AuthEvent.serverUnavailable);
-      return ApiResult(success: false, message: "Server unavailable");
+      return ApiResult(success: false, statusCode: 503, message: "Server unavailable");
     }
 
     if (response.statusCode == 401) {
@@ -77,15 +71,11 @@ class ApiClient {
       if (refreshStatus == 200) {
         response = await request();
       } else {
-        authEvents.add(
-          refreshStatus == 401
-              ? AuthEvent.loginNeeded
-              : AuthEvent.serverUnavailable,
-        );
+        authEvents.add(refreshStatus == 401 ? AuthEvent.loginNeeded : AuthEvent.serverUnavailable);
         return ApiResult(
           success: false,
           statusCode: refreshStatus,
-          message: "Session expired",
+          message: refreshStatus == 401 ? "Session expired" : "Server unavailable",
         );
       }
     }
