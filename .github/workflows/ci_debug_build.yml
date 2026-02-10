@@ -10,6 +10,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Set up Flutter SDK
         uses: subosito/flutter-action@v2
         with:
@@ -21,8 +27,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Android APK (Debug)
-        run: flutter build apk --debug
+      - name: Force Gradle memory in CI
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8" >> android/gradle.properties
+          echo "org.gradle.daemon=false" >> android/gradle.properties
+
+      - name: Build Android APK (Debug, arm64 only)
+        run: flutter build apk --debug --target-platform android-arm64
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
