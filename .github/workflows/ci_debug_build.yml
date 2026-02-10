@@ -27,11 +27,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Force Gradle memory in CI
-        run: |
-          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8" >> android/gradle.properties
-          echo "org.gradle.daemon=false" >> android/gradle.properties
-
       - name: Build Android APK (Debug, arm64 only)
         run: flutter build apk --debug --target-platform android-arm64
 
