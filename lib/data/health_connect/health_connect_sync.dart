@@ -76,6 +76,9 @@ class HealthConnectSync {
       types: HealthConnectConstants.types,
       startTime: range.start,
       endTime: range.end,
+      preferredUnits: {
+        HealthDataType.BLOOD_GLUCOSE: HealthDataUnit.MILLIMOLES_PER_LITER,
+      }
     );
 
     return _health.removeDuplicates(data);

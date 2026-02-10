@@ -1,21 +1,19 @@
-import 'package:diabits_mobile/data/manual_input/dtos/manual_input_dto.dart';
-import 'package:diabits_mobile/data/manual_input/dtos/medication_value_input.dart';
 import 'package:diabits_mobile/data/manual_input/manual_input_repository.dart';
 import 'package:diabits_mobile/data/network/requests/manual_input_request.dart';
-import 'package:diabits_mobile/data/network/responses/manual_input_response.dart';
 import 'package:diabits_mobile/domain/models/medication_input.dart';
 import 'package:diabits_mobile/ui/manual_input/manual_input_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
+import 'manual_input_test_data.dart';
 import 'manual_input_view_model_test.mocks.dart';
 
 @GenerateMocks([ManualInputRepository])
 void main() {
   late ManualInputViewModel viewModel;
   late MockManualInputRepository mockRepo;
-  final testDate = DateTime(2026, 12, 31);
+  final date = DateTime(2026, 12, 31);
 
   setUp(() {
     mockRepo = MockManualInputRepository();
@@ -23,8 +21,9 @@ void main() {
   });
 
   group('ManualInputViewModel', () {
-    test('startEditing(medication) sets active editing medication and notifies listeners', () {
-      final med = MedicationInput.fromDto(TestData.med(testDate, id: 1));
+    test('startEditing() sets active editing medication and notifies listeners', () {
+      final med = MedicationInput(name: 'med', amount: 2, time: date);
+
       int notifyCount = 0;
       viewModel.addListener(() => notifyCount++);
 
@@ -35,34 +34,44 @@ void main() {
     });
 
     test('cancelEditing() clears active editing medication and notifies listeners', () {
-      viewModel.startEditing(MedicationInput.fromDto(TestData.med(testDate)));
+      final med = MedicationInput(name: 'med', amount: 2, time: date);
+
       int notifyCount = 0;
       viewModel.addListener(() => notifyCount++);
 
+      viewModel.startEditing(med);
       viewModel.cancelEditing();
 
       expect(viewModel.activeEditingMedication, isNull);
-      expect(notifyCount, 1);
+      expect(notifyCount, 2);
     });
 
-    test(
-      'saveMedication(name, amount, time) updates existing medication when activeEditingMedication is set',
-      () {
-        viewModel.medicationManager.loadFromDto([TestData.med(testDate, id: 10, name: 'Ipren')]);
-        viewModel.startEditing(viewModel.medicationManager.medications.first);
+    test('saveMedication() updates existing medication when activeEditingMedication is set', () {
+      viewModel.medicationManager.loadFromDto([ManualInputTestData.med(date, id: 10, name: 'Ipren')]);
+      viewModel.startEditing(viewModel.medicationManager.medications.first);
 
-        viewModel.saveMedication('Panodil', 2, testDate);
+      viewModel.saveMedication('Panodil', 2, date);
 
-        expect(viewModel.activeEditingMedication, isNull);
-        expect(viewModel.medicationManager.medications.first.name, 'Panodil');
-        expect(viewModel.medicationManager.isDirty, isTrue);
-      },
-    );
+      expect(viewModel.activeEditingMedication, isNull);
+      expect(viewModel.medicationManager.medications, hasLength(1));
+      expect(viewModel.medicationManager.medications.first.name, 'Panodil');
+      expect(viewModel.medicationManager.isDirty, isTrue);
+    });
+
+    test('saveMedication() adds new medication when activeEditingMedication is null', () {
+      viewModel.medicationManager.loadFromDto([ManualInputTestData.med(date, id: 10, name: 'Ipren')]);
+
+      viewModel.saveMedication('Panodil', 2, date);
+
+      expect(viewModel.activeEditingMedication, isNull);
+      expect(viewModel.medicationManager.medications, hasLength(2));
+      expect(viewModel.medicationManager.isDirty, isTrue);
+    });
 
     test('loadDataForSelectedDate() loads managers when repository returns data', () async {
-      final response = TestData.response(
-        meds: [TestData.med(testDate, name: 'Treo')],
-        mens: TestData.mens(testDate),
+      final response = ManualInputTestData.response(
+        meds: [ManualInputTestData.med(date, name: 'Treo')],
+        mens: ManualInputTestData.mens(date),
       );
 
       when(mockRepo.getManualInputForDay(any)).thenAnswer((_) async => response);
@@ -76,7 +85,7 @@ void main() {
     });
 
     test('loadDataForSelectedDate() clears managers when repository returns null', () async {
-      viewModel.medicationManager.add('Panodil', 2, testDate);
+      viewModel.medicationManager.add('Panodil', 2, date);
       when(mockRepo.getManualInputForDay(any)).thenAnswer((_) async => null);
 
       await viewModel.loadDataForSelectedDate();
@@ -88,25 +97,28 @@ void main() {
     test(
       'submit() calls relevant repository methods when there are deletions, updates, and creations',
       () async {
-        final initialResponse = TestData.response(
-          meds: [TestData.med(testDate, id: 10, name: 'Ipren')],
-          mens: TestData.mens(testDate, id: 20),
+        final initialResponse = ManualInputTestData.response(
+          meds: [ManualInputTestData.med(date, id: 10, name: 'Ipren')],
+          mens: ManualInputTestData.mens(date, id: 20),
         );
 
         when(mockRepo.getManualInputForDay(any)).thenAnswer((_) async => initialResponse);
         await viewModel.loadDataForSelectedDate();
 
-        viewModel.saveMedication('Panodil', 2, testDate);
+        // New medication
+        viewModel.saveMedication('Panodil', 2, date);
+        // Update medication
         viewModel.startEditing(
           viewModel.medicationManager.medications.firstWhere((m) => m.id == 10),
         );
-        viewModel.saveMedication('Ipren', 4, testDate);
+        viewModel.saveMedication('Ipren', 4, date);
+        //Delete menstruation
         viewModel.toggleMenstruation(false);
 
         when(mockRepo.submitManualInputs(any)).thenAnswer((_) async => true);
         when(mockRepo.updateManualInputs(any)).thenAnswer((_) async => true);
         when(mockRepo.deleteManualInputs(any)).thenAnswer((_) async => true);
-        when(mockRepo.getManualInputForDay(any)).thenAnswer((_) async => TestData.response());
+        when(mockRepo.getManualInputForDay(any)).thenAnswer((_) async => ManualInputTestData.response());
 
         await viewModel.submit();
 
@@ -115,11 +127,13 @@ void main() {
             argThat(predicate<ManualInputDeleteRequest>((r) => r.ids.contains(20))),
           ),
         ).called(1);
+
         verify(
           mockRepo.updateManualInputs(
             argThat(predicate<ManualInputRequest>((r) => r.items.any((i) => i.id == 10))),
           ),
         ).called(1);
+
         verify(
           mockRepo.submitManualInputs(
             argThat(
@@ -141,21 +155,4 @@ void main() {
       expect(viewModel.isLoading, isFalse);
     });
   });
-}
-
-class TestData {
-  static ManualInputDto med(DateTime date, {int id = 1, String name = 'Med'}) => ManualInputDto(
-    id: id,
-    type: 'MEDICATION',
-    dateFrom: date,
-    medication: MedicationValueInput(name: name, amount: 2),
-  );
-
-  static ManualInputDto mens(DateTime date, {int id = 1}) =>
-      ManualInputDto(id: id, type: 'MENSTRUATION', dateFrom: date, flow: 'MEDIUM');
-
-  static ManualInputResponse response({
-    List<ManualInputDto> meds = const [],
-    ManualInputDto? mens,
-  }) => ManualInputResponse(medications: meds, menstruation: mens);
 }

@@ -1,10 +1,11 @@
-import 'package:diabits_mobile/data/manual_input/dtos/manual_input_dto.dart';
 import 'package:diabits_mobile/ui/manual_input/managers/menstruation_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../manual_input_test_data.dart';
+
 void main() {
   late MenstruationManager manager;
-  final testDate = DateTime(2026, 12, 31);
+  final date = DateTime(2026, 12, 31);
 
   setUp(() {
     manager = MenstruationManager();
@@ -21,7 +22,7 @@ void main() {
 
     group('Creating new entries', () {
       test('setIsMenstruating(true) creates a new entry and marks manager as dirty', () {
-        manager.setIsMenstruating(true, testDate);
+        manager.setIsMenstruating(true, date);
 
         expect(manager.menstruation, isNotNull);
         expect(manager.menstruation!.flow, MenstruationManager.defaultFlow);
@@ -29,7 +30,7 @@ void main() {
       });
 
       test('setIsMenstruating(true) produces a valid createDto', () {
-        manager.setIsMenstruating(true, testDate);
+        manager.setIsMenstruating(true, date);
 
         final dto = manager.createDto;
         expect(dto, isNotNull);
@@ -42,8 +43,8 @@ void main() {
       });
 
       test('Toggling menstruation on and off leaves the manager clean', () {
-        manager.setIsMenstruating(true, testDate);
-        manager.setIsMenstruating(false, testDate);
+        manager.setIsMenstruating(true, date);
+        manager.setIsMenstruating(false, date);
 
         expect(manager.menstruation, isNull);
         expect(manager.isDirty, isFalse);
@@ -52,12 +53,7 @@ void main() {
     });
 
     group('Loading and updating existing entries', () {
-      final originalDto = ManualInputDto(
-        id: 1,
-        type: 'MENSTRUATION',
-        dateFrom: testDate,
-        flow: 'MEDIUM',
-      );
+      final originalDto = ManualInputTestData.mens(date, id: 1, flow: 'MEDIUM');
 
       setUp(() {
         manager.loadFromDto(originalDto);
@@ -99,19 +95,14 @@ void main() {
     });
 
     group('Loading and deleting existing entries', () {
-      final originalDto = ManualInputDto(
-        id: 1,
-        type: 'MENSTRUATION',
-        dateFrom: testDate,
-        flow: 'MEDIUM',
-      );
+      final originalDto = ManualInputTestData.mens(date, id: 1, flow: 'MEDIUM');
 
       setUp(() {
         manager.loadFromDto(originalDto);
       });
 
       test('setIsMenstruating(false) on a loaded entry tracks it for deletion', () {
-        manager.setIsMenstruating(false, testDate);
+        manager.setIsMenstruating(false, date);
 
         expect(manager.isDirty, isTrue);
         expect(manager.menstruation, isNull);
@@ -121,23 +112,24 @@ void main() {
         expect(manager.updateDto, isNull);
       });
 
-      test('Deleting and then re-adding menstruation with default flow results in an update', () {
-        manager.setIsMenstruating(false, testDate);
-        manager.setIsMenstruating(true, testDate);
+      test(
+        'Deleting and then re-adding menstruation (with different flow) results in an update',
+        () {
+          manager.setIsMenstruating(false, date);
+          manager.setIsMenstruating(true, date);
 
-        expect(manager.isDirty, isTrue); // It's different from the original state
-        expect(manager.idToDelete, isNull);
-        expect(manager.updateDto, isNotNull);
-        expect(manager.updateDto!.id, 1);
-        // It should have the default flow since it was re-created
-        expect(manager.updateDto!.flow, MenstruationManager.defaultFlow);
-      });
+          expect(manager.isDirty, isTrue);
+          expect(manager.idToDelete, isNull);
+          expect(manager.updateDto, isNotNull);
+          expect(manager.updateDto!.id, 1);
+          // It should have the default flow since it was re-created
+          expect(manager.updateDto!.flow, MenstruationManager.defaultFlow);
+        },
+      );
     });
 
     test('clear() resets the state', () {
-      manager.loadFromDto(
-        ManualInputDto(id: 1, type: 'MENSTRUATION', dateFrom: testDate, flow: 'HEAVY'),
-      );
+      manager.loadFromDto(ManualInputTestData.mens(date));
 
       manager.clear();
 

@@ -17,7 +17,7 @@ class AuthGate extends StatelessWidget {
   /// Builds the widget tree based on the current authentication state.
   /// - [AuthState.none]: Shows a [LoadingScreen] while the app is initializing.
   /// - [AuthState.unauthenticated]: Shows the [LoginScreen].
-  /// - [AuthState.authenticated]: Shows the main application UI.
+  /// - [AuthState.authenticated]: Shows the [PermissionGate] that handles health connect permissions.
   @override
   Widget build(BuildContext context) {
     // Selects the authentication state from the AuthStateManager to trigger rebuilds when it changes.

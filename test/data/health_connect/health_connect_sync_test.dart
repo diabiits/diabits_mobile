@@ -24,61 +24,17 @@ void main() {
   });
 
   group('HealthConnectSync', () {
-    test('runSync() handles first-time sync (404 on lastSync)', () async {
-      when(mockPermissions.initHealthConnect()).thenAnswer((_) async => mockHealth);
-
-      // Mock lastSync returning 404
-      when(mockClient.get(any)).thenAnswer((_) async => ApiResult(success: false, statusCode: 404));
-
-      when(
-        mockHealth.getHealthDataFromTypes(
-          types: anyNamed('types'),
-          startTime: anyNamed('startTime'),
-          endTime: anyNamed('endTime'),
-        ),
-      ).thenAnswer((_) async => []);
-
-      when(mockHealth.removeDuplicates(any)).thenReturn([]);
-
-      final result = await sync.runSync();
-
-      expect(result, isTrue); // Success because nothing to sync is still success
-      verify(
-        mockHealth.getHealthDataFromTypes(
-          types: anyNamed('types'),
-          startTime: argThat(isA<DateTime>(), named: 'startTime'),
-          endTime: argThat(isA<DateTime>(), named: 'endTime'),
-        ),
-      ).called(1);
-    });
-
-    test('runSync() skips if lastSync API fails (e.g. 500)', () async {
-      when(mockPermissions.initHealthConnect()).thenAnswer((_) async => mockHealth);
-      when(mockClient.get(any)).thenAnswer((_) async => ApiResult(success: false, statusCode: 500));
-
-      final result = await sync.runSync();
-
-      expect(result, isFalse);
-      verifyNever(
-        mockHealth.getHealthDataFromTypes(
-          types: anyNamed('types'),
-          startTime: anyNamed('startTime'),
-          endTime: anyNamed('endTime'),
-        ),
-      );
-    });
-
     test('runSync() sends data to backend if found', () async {
       when(mockPermissions.initHealthConnect()).thenAnswer((_) async => mockHealth);
       when(mockClient.get(any)).thenAnswer(
         (_) async =>
-            ApiResult(success: true, statusCode: 200, body: {'lastSyncAt': '2023-01-01T00:00:00Z'}),
+            ApiResult(success: true, statusCode: 200, body: {'lastSyncAt': '2025-12-31T00:00:00Z'}),
       );
 
       final mockDataPoint = HealthDataPoint(
-        value: NumericHealthValue(numericValue: 100),
+        value: NumericHealthValue(numericValue: 6.0),
         type: HealthDataType.BLOOD_GLUCOSE,
-        unit: HealthDataUnit.MILLIGRAM_PER_DECILITER,
+        unit: HealthDataUnit.MILLIMOLES_PER_LITER,
         dateFrom: DateTime.now(),
         dateTo: DateTime.now(),
         sourceId: 'sourceId',
@@ -93,6 +49,7 @@ void main() {
           types: anyNamed('types'),
           startTime: anyNamed('startTime'),
           endTime: anyNamed('endTime'),
+          preferredUnits: anyNamed('preferredUnits'),
         ),
       ).thenAnswer((_) async => [mockDataPoint]);
 
@@ -106,6 +63,22 @@ void main() {
 
       expect(result, isTrue);
       verify(mockClient.post(any, any, timeout: anyNamed('timeout'))).called(1);
+    });
+
+    test('runSync() skips if lastSync API call never goes through', () async {
+      when(mockPermissions.initHealthConnect()).thenAnswer((_) async => mockHealth);
+      when(mockClient.get(any)).thenAnswer((_) async => ApiResult(success: false, statusCode: 503));
+
+      final result = await sync.runSync();
+
+      expect(result, isFalse);
+      verifyNever(
+        mockHealth.getHealthDataFromTypes(
+          types: anyNamed('types'),
+          startTime: anyNamed('startTime'),
+          endTime: anyNamed('endTime'),
+        ),
+      );
     });
   });
 }

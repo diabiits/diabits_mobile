@@ -30,9 +30,47 @@ void main() {
       expect(authStateManager.authState, AuthState.none);
     });
 
+    group('tryAutoLogin', () {
+      test('sets unauthenticated if no tokens', () async {
+        when(mockAuthRepo.hasTokens()).thenAnswer((_) async => false);
+
+        await authStateManager.tryAutoLogin();
+
+        expect(authStateManager.authState, AuthState.unauthenticated);
+      });
+
+      test('sets authenticated optimistically then validates', () async {
+        when(mockAuthRepo.hasTokens()).thenAnswer((_) async => true);
+        when(mockAuthRepo.autoLogin()).thenAnswer((_) async => AuthState.authenticated);
+        when(mockSyncScheduler.startBackgroundSync()).thenAnswer((_) async => {});
+
+        await authStateManager.tryAutoLogin();
+
+        expect(authStateManager.authState, AuthState.authenticated);
+        verify(mockSyncScheduler.startBackgroundSync()).called(1);
+      });
+
+      test('reverts to unauthenticated if token validation fails', () async {
+        when(mockAuthRepo.hasTokens()).thenAnswer((_) async => true);
+        when(mockAuthRepo.autoLogin()).thenAnswer((_) async => AuthState.unauthenticated);
+
+        await authStateManager.tryAutoLogin();
+
+        expect(authStateManager.authState, AuthState.unauthenticated);
+        verifyNever(mockSyncScheduler.startBackgroundSync());
+      });
+    });
+
     group('login', () {
+
+      setUp(() async {
+        when(mockAuthRepo.hasTokens()).thenAnswer((_) async => false);
+        await authStateManager.tryAutoLogin();
+      });
+
       test('updates state and starts sync on success', () async {
-        final request = LoginRequest(username: 'user', password: 'pass');
+        final request = LoginRequest(username: 'user', password: 'password');
+
         when(mockAuthRepo.login(request)).thenAnswer((_) async => AuthResult(true, null));
         when(mockSyncScheduler.startBackgroundSync()).thenAnswer((_) async => {});
 
@@ -44,12 +82,12 @@ void main() {
       });
 
       test('remains unauthenticated and returns message on failure', () async {
-        final request = LoginRequest(username: 'user', password: 'pass');
+        final request = LoginRequest(username: 'user', password: 'password');
         when(mockAuthRepo.login(request)).thenAnswer((_) async => AuthResult(false, 'Error'));
 
         final message = await authStateManager.login(request);
 
-        expect(authStateManager.authState, AuthState.none);
+        expect(authStateManager.authState, AuthState.unauthenticated);
         expect(message, 'Error');
         verifyNever(mockSyncScheduler.startBackgroundSync());
       });
@@ -80,37 +118,6 @@ void main() {
 
         expect(authStateManager.authState, AuthState.unauthenticated);
         verify(mockSyncScheduler.stopBackgroundSync()).called(1);
-      });
-    });
-
-    group('tryAutoLogin', () {
-      test('sets unauthenticated if no tokens', () async {
-        when(mockAuthRepo.hasTokens()).thenAnswer((_) async => false);
-
-        await authStateManager.tryAutoLogin();
-
-        expect(authStateManager.authState, AuthState.unauthenticated);
-      });
-
-      test('sets authenticated optimistically then validates', () async {
-        when(mockAuthRepo.hasTokens()).thenAnswer((_) async => true);
-        when(mockAuthRepo.autoLogin()).thenAnswer((_) async => AuthState.authenticated);
-        when(mockSyncScheduler.startBackgroundSync()).thenAnswer((_) async => {});
-
-        await authStateManager.tryAutoLogin();
-
-        expect(authStateManager.authState, AuthState.authenticated);
-        verify(mockSyncScheduler.startBackgroundSync()).called(1);
-      });
-
-      test('reverts to unauthenticated if token validation fails', () async {
-        when(mockAuthRepo.hasTokens()).thenAnswer((_) async => true);
-        when(mockAuthRepo.autoLogin()).thenAnswer((_) async => AuthState.unauthenticated);
-
-        await authStateManager.tryAutoLogin();
-
-        expect(authStateManager.authState, AuthState.unauthenticated);
-        verifyNever(mockSyncScheduler.startBackgroundSync());
       });
     });
   });

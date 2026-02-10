@@ -41,10 +41,10 @@ void main() {
       when(mockAuthManager.register(any)).thenAnswer((_) async => 'Error');
 
       await viewModel.submit(
-        username: 'test',
+        username: 'user',
         password: 'password',
-        email: 'test@example.com',
-        inviteCode: '123',
+        email: 'email@test.com',
+        inviteCode: 'code',
       );
 
       expect(viewModel.snackMessage, 'Error');

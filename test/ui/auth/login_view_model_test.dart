@@ -50,7 +50,7 @@ void main() {
     test('submit sets loading state and calls authManager.login', () async {
       when(mockAuthManager.login(any)).thenAnswer((_) async => null);
 
-      final future = viewModel.submit(username: ' user ', password: 'password');
+      final future = viewModel.submit(username: 'user', password: 'password');
       
       expect(viewModel.isLoading, isTrue);
       

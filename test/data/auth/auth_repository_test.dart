@@ -31,11 +31,11 @@ void main() {
     };
 
     test('login() saves tokens on success', () async {
-      final request = LoginRequest(username: 'test', password: 'password');
+      final request = LoginRequest(username: 'user', password: 'password');
 
-      when(
-        mockClient.post(any, any),
-      ).thenAnswer((_) async => ApiResult(success: true, statusCode: 200, body: successResponseBody));
+      when(mockClient.post(any, any)).thenAnswer(
+        (_) async => ApiResult(success: true, statusCode: 200, body: successResponseBody),
+      );
 
       final result = await repository.login(request);
 
@@ -49,12 +49,12 @@ void main() {
         username: 'u',
         password: 'p',
         email: 'e@e.com',
-        inviteCode: '123',
+        inviteCode: 'c',
       );
 
-      when(
-        mockClient.post(any, any),
-      ).thenAnswer((_) async => ApiResult(success: true, statusCode: 200, body: successResponseBody));
+      when(mockClient.post(any, any)).thenAnswer(
+        (_) async => ApiResult(success: true, statusCode: 200, body: successResponseBody),
+      );
 
       final result = await repository.register(request);
 
