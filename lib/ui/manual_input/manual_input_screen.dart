@@ -1,6 +1,6 @@
 import 'package:diabits_mobile/ui/manual_input/widgets/date_selector.dart';
-import 'package:diabits_mobile/ui/manual_input/widgets/medication/medication_form.dart';
-import 'package:diabits_mobile/ui/manual_input/widgets/medication/medication_section.dart';
+import 'package:diabits_mobile/ui/manual_input/widgets/medication_form.dart';
+import 'package:diabits_mobile/ui/manual_input/widgets/medication_section.dart';
 import 'package:diabits_mobile/ui/manual_input/widgets/menstruation_section.dart';
 import 'package:diabits_mobile/ui/shared/top_bar.dart';
 import 'package:flutter/material.dart';

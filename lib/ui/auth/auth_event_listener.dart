@@ -26,25 +26,14 @@ class _AuthEventListenerState extends State<AuthEventListener> {
 
     // Establishes a permanent listener for broadcasted AuthEvents.
     _subscription = authEvents.stream.listen((event) {
-      switch (event) {
-        case AuthEvent.loginNeeded:
-          _showMessage("Your session expired. Please log in again.");
-          break;
-        case AuthEvent.serverUnavailable:
-          _showMessage("Server is currently unavailable.");
-          break;
-      }
+      _showMessage(event.message);
     });
   }
 
   /// Displays a [SnackBar] message to the user.
   void _showMessage(String message) {
     if (!mounted) return;
-
-    final context = this.context;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

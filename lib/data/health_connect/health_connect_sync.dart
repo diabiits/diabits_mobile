@@ -55,7 +55,7 @@ class HealthConnectSync {
       final weekAgo = now.subtract(const Duration(days: 7));
       start = _startOfDay(weekAgo);
     } else {
-      // ApiClient already broadcasted the specific AuthEvent (loginNeeded/serverUnavailable)
+      // ApiClient already broadcasted the specific AuthEvent
       return null;
     }
 
@@ -89,7 +89,7 @@ class HealthConnectSync {
     var result = await _client.post(
       Endpoints.healthConnect,
       batch.toJson(),
-      timeout: const Duration(minutes: 5),
+      timeout: const Duration(minutes: 10),
     );
 
     return result.success;

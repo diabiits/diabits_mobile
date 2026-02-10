@@ -63,7 +63,7 @@ class DateSelector extends StatelessWidget {
 
   /// Formats the date for display.
   ///
-  /// Returns "Today" for the current date, otherwise formats it as 'd MMMM y' (e.g., 11 January 2023).
+  /// Returns "Today" for the current date, otherwise formats it as 'd MMMM y' (e.g., 31 December 2026).
   String _formatDate(DateTime day) {
     if (DateUtils.isSameDay(day, DateTime.now())) return 'Today';
     return intl.DateFormat('d MMMM y', intl.Intl.systemLocale).format(day);
@@ -89,6 +89,7 @@ class DateSelector extends StatelessWidget {
 
     if (vm.hasUnsavedChanges) {
       final confirmed = await _confirmDiscardChanges(context);
+      if (!context.mounted) return;
       if (confirmed != true) return;
     }
 

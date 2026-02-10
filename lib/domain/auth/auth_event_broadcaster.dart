@@ -1,6 +1,5 @@
 import 'dart:async';
 
-//TODO Add message as passable parameter to AuthEvent
 /// Simple event bus for broadcasting authentication-related events.
 /// This allows different parts of the app to communicate about global transient events.
 class AuthEvents {
@@ -15,8 +14,12 @@ class AuthEvents {
   void dispose() => _streamController.close();
 }
 
-/// An enum representing the different types of authentication events.
-enum AuthEvent { loginNeeded, serverUnavailable }
+enum AuthEvent {
+  loginNeeded("Your session expired. Please log in again."),
+  serverUnavailable("Server is currently unavailable.");
 
+  final String message;
+  const AuthEvent(this.message);
+}
 /// A global singleton instance of the [AuthEvents] class.
 final authEvents = AuthEvents();
