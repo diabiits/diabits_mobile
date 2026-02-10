@@ -2,8 +2,8 @@ import 'package:diabits_mobile/ui/shared/field_validators.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../domain/models/medication_input.dart';
-import '../../manual_input_view_model.dart';
+import '../../../domain/models/medication_input.dart';
+import '../manual_input_view_model.dart';
 
 class MedicationForm extends StatefulWidget {
   final MedicationInput? initial;
@@ -148,6 +148,7 @@ class _MedicationFormState extends State<MedicationForm> {
   Future<void> _pickTime() async {
     final picked = await showTimePicker(context: context, initialTime: _selectedTime);
     if (picked == null) return;
+    if (!mounted) return;
 
     setState(() => _selectedTime = picked);
     _timeController.text = picked.format(context);

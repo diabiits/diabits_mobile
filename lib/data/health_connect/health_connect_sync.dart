@@ -55,7 +55,7 @@ class HealthConnectSync {
       final weekAgo = now.subtract(const Duration(days: 7));
       start = _startOfDay(weekAgo);
     } else {
-      // ApiClient already broadcasted the specific AuthEvent (loginNeeded/serverUnavailable)
+      // ApiClient already broadcasted the specific AuthEvent
       return null;
     }
 
@@ -76,6 +76,9 @@ class HealthConnectSync {
       types: HealthConnectConstants.types,
       startTime: range.start,
       endTime: range.end,
+      preferredUnits: {
+        HealthDataType.BLOOD_GLUCOSE: HealthDataUnit.MILLIMOLES_PER_LITER,
+      }
     );
 
     return _health.removeDuplicates(data);
@@ -89,7 +92,7 @@ class HealthConnectSync {
     var result = await _client.post(
       Endpoints.healthConnect,
       batch.toJson(),
-      timeout: const Duration(minutes: 5),
+      timeout: const Duration(minutes: 10),
     );
 
     return result.success;

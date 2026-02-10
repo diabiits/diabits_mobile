@@ -1,7 +1,5 @@
 import 'package:diabits_mobile/domain/auth/auth_state_manager.dart';
 import 'package:flutter/cupertino.dart';
-
-import '../../data/auth/auth_repository.dart';
 import '../../data/network/requests/register_request.dart';
 
 /// This class handles the business logic for the registration process, including

@@ -16,7 +16,6 @@ import 'data/network/api_client.dart';
 import 'domain/auth/auth_state_manager.dart';
 
 //TODO Documentation
-//TODO Tests
 
 /// Entry point of the Diabits application.
 ///

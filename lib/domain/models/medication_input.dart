@@ -1,5 +1,4 @@
 import 'package:diabits_mobile/data/manual_input/dtos/manual_input_dto.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../data/manual_input/dtos/medication_value_input.dart';
 import 'manual_input_ids.dart';
@@ -19,12 +18,9 @@ class MedicationInput {
 
   /// Creates a new, unsaved [MedicationInput] instance with a unique ID.
   /// This is used when a user creates a new medication entry in the UI.
-  MedicationInput({
-    required this.name,
-    required this.amount,
-    required this.time,
-  })  : id = ManualInputIds.next(),
-        isSavedInDatabase = false;
+  MedicationInput({required this.name, required this.amount, required this.time})
+    : id = ManualInputIds.next(),
+      isSavedInDatabase = false;
 
   /// Creates a [MedicationInput] instance with a specified ID and save status.
   /// This private constructor is used internally, primarily by the [fromDto] factory.
@@ -59,11 +55,7 @@ class MedicationInput {
     );
   }
 
-  MedicationInput copyWith({
-    String? name,
-    int? amount,
-    DateTime? time,
-  }) {
+  MedicationInput copyWith({String? name, int? amount, DateTime? time}) {
     return MedicationInput._(
       id: id,
       name: name ?? this.name,

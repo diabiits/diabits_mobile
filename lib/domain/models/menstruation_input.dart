@@ -1,5 +1,4 @@
 import 'package:diabits_mobile/data/manual_input/dtos/manual_input_dto.dart';
-import 'package:uuid/uuid.dart';
 
 import 'manual_input_ids.dart';
 
@@ -19,10 +18,8 @@ class MenstruationInput {
   /// Creates a new, unsaved [MenstruationInput] instance with a unique ID.
   ///
   /// This is used when a user creates a new menstruation entry in the UI.
-  MenstruationInput({
-    required this.flow,
-    required this.dateFrom,
-  })  : id = ManualInputIds.next(),
+  MenstruationInput({required this.flow, required this.dateFrom})
+    : id = ManualInputIds.next(),
       isSavedInDatabase = false;
 
   /// Creates a [MenstruationInput] instance with a specified ID and save status.
@@ -44,7 +41,7 @@ class MenstruationInput {
     return MenstruationInput._(
       id: dto.id!,
       flow: dto.flow!,
-      dateFrom: dto.dateFrom!,
+      dateFrom: dto.dateFrom,
       isSavedInDatabase: true,
     );
   }

@@ -1,6 +1,5 @@
 import '../network/api_client.dart';
 import '../network/endpoints.dart';
-import 'dtos/manual_input_dto.dart';
 import '../network/requests/manual_input_request.dart';
 import '../network/responses/manual_input_response.dart';
 

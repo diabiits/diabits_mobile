@@ -14,8 +14,7 @@ class FieldValidators {
     if (!value.contains(RegExp(r'[a-z]'))) return 'Missing lowercase';
     if (!value.contains(RegExp(r'[A-Z]'))) return 'Missing uppercase';
     if (!value.contains(RegExp(r'\d'))) return 'Missing digit';
-    if (!value.contains(RegExp(r'[^A-Za-z0-9]')))
-      return 'Missing special character';
+    if (!value.contains(RegExp(r'[^A-Za-z0-9]'))) return 'Missing special character';
     return null;
   }
 
