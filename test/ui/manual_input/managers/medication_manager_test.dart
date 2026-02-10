@@ -1,3 +1,4 @@
+import 'package:diabits_mobile/domain/models/medication_input.dart';
 import 'package:diabits_mobile/ui/manual_input/managers/medication_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -20,7 +21,13 @@ void main() {
 
     group('Adding medications', () {
       test('add() increases list and marks manager as dirty', () {
-        manager.add('Panodil', 5, date);
+        manager.add(
+          name: 'Panodil',
+          quantity: 2,
+          strengthValue: 500,
+          strengthUnit: StrengthUnit.mg,
+          time: date,
+        );
 
         expect(manager.medications, hasLength(1));
         expect(manager.medications.first.name, 'Panodil');
@@ -28,7 +35,13 @@ void main() {
       });
 
       test('New medications are included in buildCreateRequests', () {
-        manager.add('Panodil', 5, date);
+        manager.add(
+          name: 'Panodil',
+          quantity: 2,
+          strengthValue: 500,
+          strengthUnit: StrengthUnit.mg,
+          time: date,
+        );
 
         final requests = manager.buildCreateRequests();
         expect(requests, hasLength(1));
@@ -39,7 +52,14 @@ void main() {
     });
 
     group('Loading and updating medications', () {
-      final originalDto = ManualInputTestData.med(date, id: 101, name: 'Ipren', amount: 2);
+      final originalDto = ManualInputTestData.med(
+        date,
+        id: 101,
+        name: 'Ipren',
+        quantity: 2,
+        strengthValue: 400,
+        strengthUnit: 'MG',
+      );
 
       setUp(() {
         manager.loadFromDto([originalDto]);
@@ -53,22 +73,43 @@ void main() {
       });
 
       test('Updating a loaded medication marks manager as dirty', () {
-        manager.update(101, 'Ipren', 5, date);
+        manager.update(
+          id: 101,
+          name: 'Ipren',
+          quantity: 5,
+          strengthValue: 400,
+          strengthUnit: StrengthUnit.mg,
+          time: date,
+        );
 
         expect(manager.isDirty, isTrue);
-        expect(manager.medications.first.amount, 5);
+        expect(manager.medications.first.quantity, 5);
 
         final updates = manager.buildUpdateRequests();
         expect(updates, hasLength(1));
         expect(updates.first.id, 101);
-        expect(updates.first.medication?.amount, 5);
+        expect(updates.first.medication?.quantity, 5);
       });
 
       test('Updating back to original values clears dirty state', () {
-        manager.update(101, 'Ipren', 222, date);
+        manager.update(
+          id: 101,
+          name: 'Ipren',
+          quantity: 222,
+          strengthValue: 400,
+          strengthUnit: StrengthUnit.mg,
+          time: date,
+        );
         expect(manager.isDirty, isTrue);
 
-        manager.update(101, 'Ipren', 2, date);
+        manager.update(
+          id: 101,
+          name: 'Ipren',
+          quantity: 2,
+          strengthValue: 400,
+          strengthUnit: StrengthUnit.mg,
+          time: date,
+        );
         expect(manager.isDirty, isFalse);
         expect(manager.buildUpdateRequests(), isEmpty);
       });
@@ -76,7 +117,13 @@ void main() {
 
     group('Removing medications', () {
       test('Removing an unsaved medication removes it from the list', () {
-        manager.add('Panodil', 2, date);
+        manager.add(
+          name: 'Panodil',
+          quantity: 2,
+          strengthValue: 500,
+          strengthUnit: StrengthUnit.mg,
+          time: date,
+        );
         final tempId = manager.medications.first.id;
 
         manager.removeById(tempId);
@@ -99,7 +146,13 @@ void main() {
     });
 
     test('clear() resets all state', () {
-      manager.add('Panodil', 5, date);
+      manager.add(
+        name: 'Panodil',
+        quantity: 5,
+        strengthValue: 500,
+        strengthUnit: StrengthUnit.mg,
+        time: date,
+      );
       manager.clear();
 
       expect(manager.medications, isEmpty);

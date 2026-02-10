@@ -47,12 +47,31 @@ class ManualInputViewModel extends ChangeNotifier {
   }
 
   /// High-level logic to decide whether to add or update an item.
-  void saveMedication(String name, int amount, DateTime time) {
+  void saveMedication({
+    required String name,
+    required double quantity,
+    required double strengthValue,
+    required StrengthUnit strengthUnit,
+    required DateTime time,
+  }) {
     if (_activeEditingMedication != null) {
-      medicationManager.update(_activeEditingMedication!.id, name, amount, time);
+      medicationManager.update(
+        id: _activeEditingMedication!.id,
+        name: name,
+        quantity: quantity,
+        strengthValue: strengthValue,
+        strengthUnit: strengthUnit,
+        time: time,
+      );
       _activeEditingMedication = null;
     } else {
-      medicationManager.add(name, amount, time);
+      medicationManager.add(
+        name: name,
+        quantity: quantity,
+        strengthValue: strengthValue,
+        strengthUnit: strengthUnit,
+        time: time,
+      );
     }
     notifyListeners();
   }

@@ -25,4 +25,10 @@ class FieldValidators {
     if (int.tryParse(value) == null) return 'Must be a whole number';
     return null;
   }
+
+  static String? doubleValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return 'Required';
+    if (double.tryParse(value) == null) return 'Must be a number';
+    return null;
+  }
 }

@@ -10,7 +10,9 @@ import 'manual_input_ids.dart';
 class MedicationInput {
   final int id;
   final String name;
-  final int amount;
+  final double quantity;
+  final double strengthValue;
+  final StrengthUnit strengthUnit;
   final DateTime time;
 
   /// A flag indicating whether this record is persisted in the remote database.
@@ -18,16 +20,23 @@ class MedicationInput {
 
   /// Creates a new, unsaved [MedicationInput] instance with a unique ID.
   /// This is used when a user creates a new medication entry in the UI.
-  MedicationInput({required this.name, required this.amount, required this.time})
-    : id = ManualInputIds.next(),
-      isSavedInDatabase = false;
+  MedicationInput({
+    required this.name,
+    required this.quantity,
+    required this.strengthValue,
+    required this.strengthUnit,
+    required this.time,
+  }) : id = ManualInputIds.next(),
+       isSavedInDatabase = false;
 
   /// Creates a [MedicationInput] instance with a specified ID and save status.
   /// This private constructor is used internally, primarily by the [fromDto] factory.
   MedicationInput._({
     required this.id,
     required this.name,
-    required this.amount,
+    required this.quantity,
+    required this.strengthValue,
+    required this.strengthUnit,
     required this.time,
     required this.isSavedInDatabase,
   });
@@ -39,7 +48,12 @@ class MedicationInput {
     return MedicationInput._(
       id: dto.id!,
       name: dto.medication!.name,
-      amount: dto.medication!.amount,
+      quantity: dto.medication!.quantity,
+      strengthValue: dto.medication!.strengthValue,
+      strengthUnit: StrengthUnit.values.firstWhere(
+        (e) => e.name.toLowerCase() == dto.medication!.strengthUnit.toLowerCase(),
+        orElse: () => StrengthUnit.mg,
+      ),
       time: dto.dateFrom,
       isSavedInDatabase: true,
     );
@@ -51,17 +65,32 @@ class MedicationInput {
       id: isSavedInDatabase ? id : null,
       type: 'MEDICATION',
       dateFrom: time,
-      medication: MedicationValueInput(name: name, amount: amount),
+      medication: MedicationValueInput(
+        name: name,
+        quantity: quantity,
+        strengthValue: strengthValue,
+        strengthUnit: strengthUnit.name.toUpperCase(),
+      ),
     );
   }
 
-  MedicationInput copyWith({String? name, int? amount, DateTime? time}) {
+  MedicationInput copyWith({
+    String? name,
+    double? quantity,
+    double? strengthValue,
+    StrengthUnit? strengthUnit,
+    DateTime? time,
+  }) {
     return MedicationInput._(
       id: id,
       name: name ?? this.name,
-      amount: amount ?? this.amount,
+      quantity: quantity ?? this.quantity,
+      strengthValue: strengthValue ?? this.strengthValue,
+      strengthUnit: strengthUnit ?? this.strengthUnit,
       time: time ?? this.time,
       isSavedInDatabase: isSavedInDatabase,
     );
   }
 }
+
+enum StrengthUnit { mg, mcg, g, ml, iu }

@@ -4,12 +4,24 @@ import 'package:diabits_mobile/data/network/responses/manual_input_response.dart
 import 'package:diabits_mobile/ui/manual_input/managers/menstruation_manager.dart';
 
 class ManualInputTestData {
-  static ManualInputDto med(DateTime date, {int id = 1, String name = 'Med', int amount = 2}) =>
+  static ManualInputDto med(
+    DateTime date, {
+    int id = 1,
+    String name = 'Med',
+    double quantity = 1.0,
+    double strengthValue = 500.0,
+    String strengthUnit = 'MG',
+  }) =>
       ManualInputDto(
         id: id,
         type: 'MEDICATION',
         dateFrom: date,
-        medication: MedicationValueInput(name: name, amount: amount),
+        medication: MedicationValueInput(
+          name: name,
+          quantity: quantity,
+          strengthValue: strengthValue,
+          strengthUnit: strengthUnit,
+        ),
       );
 
   static ManualInputDto mens(

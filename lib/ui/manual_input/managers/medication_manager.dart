@@ -1,5 +1,3 @@
-import 'package:diabits_mobile/data/manual_input/dtos/medication_value_input.dart';
-
 import '../../../data/manual_input/dtos/manual_input_dto.dart';
 import '../../../domain/models/medication_input.dart';
 
@@ -38,8 +36,23 @@ class MedicationManager {
   }
 
   /// Adds a new medication entry (not yet in database).
-  void add(String name, int amount, DateTime time) {
-    medications = [...medications, MedicationInput(name: name, amount: amount, time: time)];
+  void add({
+    required String name,
+    required double quantity,
+    required double strengthValue,
+    required StrengthUnit strengthUnit,
+    required DateTime time,
+  }) {
+    medications = [
+      ...medications,
+      MedicationInput(
+        name: name,
+        quantity: quantity,
+        strengthValue: strengthValue,
+        strengthUnit: strengthUnit,
+        time: time,
+      ),
+    ];
   }
 
   /// Removes a medication from the list. If it was in the DB, tracks it for deletion.
@@ -52,11 +65,24 @@ class MedicationManager {
   }
 
   /// Updates the values of an existing entry in the current list.
-  void update(int id, String name, int amount, DateTime time) {
+  void update({
+    required int id,
+    required String name,
+    required double quantity,
+    required double strengthValue,
+    required StrengthUnit strengthUnit,
+    required DateTime time,
+  }) {
     final index = medications.indexWhere((m) => m.id == id);
     if (index == -1) return;
 
-    final updated = medications[index].copyWith(name: name, amount: amount, time: time);
+    final updated = medications[index].copyWith(
+      name: name,
+      quantity: quantity,
+      strengthValue: strengthValue,
+      strengthUnit: strengthUnit,
+      time: time,
+    );
 
     final newList = List<MedicationInput>.from(medications);
     newList[index] = updated;
@@ -69,17 +95,7 @@ class MedicationManager {
 
   /// Returns DTOs for database items that were modified.
   List<ManualInputDto> buildUpdateRequests() {
-    return medications
-        .where(_hasChangedSinceSnapshot)
-        .map(
-          (m) => ManualInputDto(
-            id: m.id,
-            type: 'MEDICATION',
-            dateFrom: m.time,
-            medication: MedicationValueInput(name: m.name, amount: m.amount),
-          ),
-        )
-        .toList();
+    return medications.where(_hasChangedSinceSnapshot).map((m) => m.toDto()).toList();
   }
 
   /// Resets the manager to an empty state.
@@ -95,7 +111,9 @@ class MedicationManager {
     if (original == null) return false;
 
     return original.name != current.name ||
-        original.amount != current.amount ||
+        original.quantity != current.quantity ||
+        original.strengthValue != current.strengthValue ||
+        original.strengthUnit != current.strengthUnit ||
         original.time != current.time;
   }
 }
