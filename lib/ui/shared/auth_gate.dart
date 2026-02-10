@@ -1,10 +1,8 @@
 import 'package:diabits_mobile/ui/auth/login_screen.dart';
 import 'package:diabits_mobile/ui/health_connect/permission_gate.dart';
-import 'package:diabits_mobile/ui/manual_input/manual_input_screen.dart';
 import 'package:diabits_mobile/ui/shared/loading_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../domain/auth/auth_state_manager.dart';
 
 /// A widget that acts as an authentication gate for the application.

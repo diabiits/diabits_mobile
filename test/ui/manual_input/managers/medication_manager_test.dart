@@ -1,5 +1,3 @@
-import 'package:diabits_mobile/data/manual_input/dtos/manual_input_dto.dart';
-import 'package:diabits_mobile/data/manual_input/dtos/medication_value_input.dart';
 import 'package:diabits_mobile/ui/manual_input/managers/medication_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 
