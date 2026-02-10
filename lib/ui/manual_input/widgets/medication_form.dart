@@ -17,9 +17,11 @@ class MedicationForm extends StatefulWidget {
 class _MedicationFormState extends State<MedicationForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _amountController = TextEditingController();
+  final _quantityController = TextEditingController();
+  final _strengthValueController = TextEditingController();
   final _timeController = TextEditingController();
 
+  StrengthUnit _strengthUnit = StrengthUnit.mg;
   late TimeOfDay _selectedTime;
   late final bool _isEdit;
 
@@ -32,7 +34,9 @@ class _MedicationFormState extends State<MedicationForm> {
 
     if (initial != null) {
       _nameController.text = initial.name;
-      _amountController.text = initial.amount.toString();
+      _quantityController.text = initial.quantity.toString();
+      _strengthValueController.text = initial.strengthValue.toString();
+      _strengthUnit = initial.strengthUnit;
       _selectedTime = TimeOfDay.fromDateTime(initial.time);
     } else {
       _selectedTime = TimeOfDay.now();
@@ -56,69 +60,117 @@ class _MedicationFormState extends State<MedicationForm> {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: .min,
-          crossAxisAlignment: .stretch,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 12),
-            Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: .min,
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Medication name'),
-                    validator: FieldValidators.requiredValidator,
-                    textInputAction: .next,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _amountController,
-                    decoration: const InputDecoration(labelText: 'Amount'),
-                    keyboardType: .number,
-                    validator: FieldValidators.integerValidator,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _timeController,
-                    readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Taken at',
-                      prefixIcon: Icon(Icons.access_time),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: .min,
+            crossAxisAlignment: .stretch,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 12),
+              Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: .min,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(labelText: 'Medication name'),
+                      validator: FieldValidators.requiredValidator,
+                      textInputAction: .next,
                     ),
-                    onTap: _pickTime,
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: .start,
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: TextFormField(
+                            controller: _quantityController,
+                            decoration: const InputDecoration(labelText: 'Quantity'),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            validator: FieldValidators.doubleValidator,
+                            textInputAction: .next,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 3,
+                          child: TextFormField(
+                            controller: _timeController,
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Taken at',
+                              prefixIcon: Icon(Icons.access_time),
+                            ),
+                            onTap: _pickTime,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: .start,
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: TextFormField(
+                            controller: _strengthValueController,
+                            decoration: const InputDecoration(labelText: 'Strength'),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            validator: FieldValidators.doubleValidator,
+                            textInputAction: .next,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 3,
+                          child: DropdownButtonFormField<StrengthUnit>(
+                            initialValue: _strengthUnit,
+                            decoration: const InputDecoration(labelText: 'Unit'),
+                            items: StrengthUnit.values.map((unit) {
+                              return DropdownMenuItem(
+                                value: unit,
+                                child: Text(unit.name.toUpperCase()),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val == null) return;
+                              setState(() => _strengthUnit = val);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        context.read<ManualInputViewModel>().cancelEditing();
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _submit,
+                      icon: Icon(actionIcon),
+                      label: Text(actionText),
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {
-                      context.read<ManualInputViewModel>().cancelEditing();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Cancel'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _submit,
-                    icon: Icon(actionIcon),
-                    label: Text(actionText),
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -131,7 +183,8 @@ class _MedicationFormState extends State<MedicationForm> {
     final selectedDay = vm.selectedDate;
 
     final name = _nameController.text.trim();
-    final amount = int.parse(_amountController.text.trim());
+    final quantity = double.parse(_quantityController.text.trim());
+    final strengthValue = double.parse(_strengthValueController.text.trim());
 
     final time = DateTime(
       selectedDay.year,
@@ -141,7 +194,13 @@ class _MedicationFormState extends State<MedicationForm> {
       _selectedTime.minute,
     );
 
-    vm.saveMedication(name, amount, time);
+    vm.saveMedication(
+      name: name,
+      quantity: quantity,
+      strengthValue: strengthValue,
+      strengthUnit: _strengthUnit,
+      time: time,
+    );
     Navigator.pop(context);
   }
 
@@ -157,7 +216,8 @@ class _MedicationFormState extends State<MedicationForm> {
   @override
   void dispose() {
     _nameController.dispose();
-    _amountController.dispose();
+    _quantityController.dispose();
+    _strengthValueController.dispose();
     _timeController.dispose();
     super.dispose();
   }

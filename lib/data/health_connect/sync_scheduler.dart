@@ -5,6 +5,7 @@ import 'package:diabits_mobile/data/network/api_client.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:workmanager/workmanager.dart';
 
+//TODO Test if sync is working/happening
 /// Controls registration of background sync tasks for Health Connect data.
 /// WorkManager runs tasks in a separate isolate, so the scheduler cannot use DI.
 class SyncScheduler {

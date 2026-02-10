@@ -86,6 +86,7 @@ class _MedicationList extends StatelessWidget {
       ),
       itemBuilder: (_, index) {
         final med = meds[index];
+        final strengthStr = '${med.strengthValue}${med.strengthUnit.name.toUpperCase()}';
 
         return Dismissible(
           key: ValueKey(med.id),
@@ -99,7 +100,9 @@ class _MedicationList extends StatelessWidget {
           onDismissed: (_) => onDelete(med.id),
           child: ListTile(
             title: Text(med.name),
-            subtitle: Text('${med.amount} • ${DateFormat.Hm().format(med.time)}'),
+            subtitle: Text(
+              '${med.quantity} x $strengthStr • ${DateFormat.Hm().format(med.time)}',
+            ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => onEdit(med),
           ),

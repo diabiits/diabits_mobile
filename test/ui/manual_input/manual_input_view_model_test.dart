@@ -22,7 +22,13 @@ void main() {
 
   group('ManualInputViewModel', () {
     test('startEditing() sets active editing medication and notifies listeners', () {
-      final med = MedicationInput(name: 'med', amount: 2, time: date);
+      final med = MedicationInput(
+        name: 'med',
+        quantity: 2,
+        strengthValue: 500,
+        strengthUnit: StrengthUnit.mg,
+        time: date,
+      );
 
       int notifyCount = 0;
       viewModel.addListener(() => notifyCount++);
@@ -34,7 +40,13 @@ void main() {
     });
 
     test('cancelEditing() clears active editing medication and notifies listeners', () {
-      final med = MedicationInput(name: 'med', amount: 2, time: date);
+      final med = MedicationInput(
+        name: 'med',
+        quantity: 2,
+        strengthValue: 500,
+        strengthUnit: StrengthUnit.mg,
+        time: date,
+      );
 
       int notifyCount = 0;
       viewModel.addListener(() => notifyCount++);
@@ -50,7 +62,13 @@ void main() {
       viewModel.medicationManager.loadFromDto([ManualInputTestData.med(date, id: 10, name: 'Ipren')]);
       viewModel.startEditing(viewModel.medicationManager.medications.first);
 
-      viewModel.saveMedication('Panodil', 2, date);
+      viewModel.saveMedication(
+        name: 'Panodil',
+        quantity: 2,
+        strengthValue: 500,
+        strengthUnit: StrengthUnit.mg,
+        time: date,
+      );
 
       expect(viewModel.activeEditingMedication, isNull);
       expect(viewModel.medicationManager.medications, hasLength(1));
@@ -61,7 +79,13 @@ void main() {
     test('saveMedication() adds new medication when activeEditingMedication is null', () {
       viewModel.medicationManager.loadFromDto([ManualInputTestData.med(date, id: 10, name: 'Ipren')]);
 
-      viewModel.saveMedication('Panodil', 2, date);
+      viewModel.saveMedication(
+        name: 'Panodil',
+        quantity: 2,
+        strengthValue: 500,
+        strengthUnit: StrengthUnit.mg,
+        time: date,
+      );
 
       expect(viewModel.activeEditingMedication, isNull);
       expect(viewModel.medicationManager.medications, hasLength(2));
@@ -85,7 +109,13 @@ void main() {
     });
 
     test('loadDataForSelectedDate() clears managers when repository returns null', () async {
-      viewModel.medicationManager.add('Panodil', 2, date);
+      viewModel.medicationManager.add(
+        name: 'Panodil',
+        quantity: 2,
+        strengthValue: 500,
+        strengthUnit: StrengthUnit.mg,
+        time: date,
+      );
       when(mockRepo.getManualInputForDay(any)).thenAnswer((_) async => null);
 
       await viewModel.loadDataForSelectedDate();
@@ -106,12 +136,24 @@ void main() {
         await viewModel.loadDataForSelectedDate();
 
         // New medication
-        viewModel.saveMedication('Panodil', 2, date);
+        viewModel.saveMedication(
+          name: 'Panodil',
+          quantity: 2,
+          strengthValue: 500,
+          strengthUnit: StrengthUnit.mg,
+          time: date,
+        );
         // Update medication
         viewModel.startEditing(
           viewModel.medicationManager.medications.firstWhere((m) => m.id == 10),
         );
-        viewModel.saveMedication('Ipren', 4, date);
+        viewModel.saveMedication(
+          name: 'Ipren',
+          quantity: 4,
+          strengthValue: 500,
+          strengthUnit: StrengthUnit.mg,
+          time: date,
+        );
         //Delete menstruation
         viewModel.toggleMenstruation(false);
 
