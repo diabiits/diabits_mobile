@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -81,6 +82,11 @@ class ApiClient {
     }
 
     final decodedBody = _tryDecodeJson(response.body);
+
+    if (response.statusCode >= 400) {
+      debugPrint('API Error [${response.statusCode}] on ${response.request?.url}');
+      debugPrint('Response body: ${response.body}');
+    }
 
     return ApiResult(
       success: response.statusCode >= 200 && response.statusCode < 300,
