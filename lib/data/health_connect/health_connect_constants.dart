@@ -9,7 +9,6 @@ class HealthConnectConstants {
     HealthDataType.HEART_RATE,
     HealthDataType.SLEEP_SESSION,
     HealthDataType.WORKOUT,
-    HealthDataType.ACTIVE_ENERGY_BURNED,
-    HealthDataType.DISTANCE_DELTA,
+    HealthDataType.ACTIVE_ENERGY_BURNED
   ];
 }
