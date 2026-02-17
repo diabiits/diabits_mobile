@@ -18,6 +18,7 @@ class DiabitsApp extends StatelessWidget {
     const charcoal = Color(0xFF333333);
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Diabits',
       theme: ThemeData(
         useMaterial3: true,
