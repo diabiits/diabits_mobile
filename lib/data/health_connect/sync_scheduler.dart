@@ -18,7 +18,7 @@ class SyncScheduler {
     if (_initialized) return;
 
     await Workmanager().initialize(callbackDispatcher);
-    await Workmanager().registerOneOffTask("uniqueName", "taskName");
+    //await Workmanager().registerOneOffTask("uniqueName", "taskName");
 
     await Workmanager().registerPeriodicTask(
       "dailyHealthSync",
