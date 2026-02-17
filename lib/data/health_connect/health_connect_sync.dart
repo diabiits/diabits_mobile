@@ -1,5 +1,6 @@
 import 'package:diabits_mobile/data/health_connect/health_connect_constants.dart';
 import 'package:diabits_mobile/data/network/endpoints.dart';
+import 'package:diabits_mobile/data/network/requests/last_sync_request.dart';
 import 'package:flutter/material.dart';
 import 'package:health/health.dart';
 
@@ -54,6 +55,7 @@ class HealthConnectSync {
     return DateTimeRange(start: start, end: end);
   }
 
+  //TODO Get steps in hour increments?
   Future<List<HealthDataPoint>> _getHealthConnectData(DateTimeRange range) async {
     _syncTime = range.end;
 
@@ -88,7 +90,7 @@ class HealthConnectSync {
         return false;
       }
     }
-
+    await _client.put(Endpoints.lastSync, LastSyncRequest(syncTime: _syncTime!.toIso8601String()));
     return true;
   }
 
@@ -106,7 +108,6 @@ class HealthConnectSync {
     }
 
     return HealthConnectRequest(
-      clientSyncTime: _syncTime!.toIso8601String(),
       workouts: workouts,
       numerics: numerics,
     );

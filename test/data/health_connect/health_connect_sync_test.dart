@@ -26,6 +26,7 @@ void main() {
   group('HealthConnectSync', () {
     test('runSync() sends data to backend if found', () async {
       when(mockPermissions.initHealthConnect()).thenAnswer((_) async => mockHealth);
+      
       when(mockClient.get(any)).thenAnswer(
         (_) async =>
             ApiResult(success: true, statusCode: 200, body: {'lastSyncAt': '2025-12-31T00:00:00Z'}),
@@ -59,10 +60,16 @@ void main() {
         mockClient.post(any, any, timeout: anyNamed('timeout')),
       ).thenAnswer((_) async => ApiResult(success: true, statusCode: 200));
 
+      // Mock the put call that updates the last sync time at the end of _sendInBatches
+      when(
+        mockClient.put(any, any),
+      ).thenAnswer((_) async => ApiResult(success: true, statusCode: 200));
+
       final result = await sync.runSync();
 
       expect(result, isTrue);
       verify(mockClient.post(any, any, timeout: anyNamed('timeout'))).called(1);
+      verify(mockClient.put(any, any)).called(1);
     });
 
     test('runSync() skips if lastSync API call never goes through', () async {

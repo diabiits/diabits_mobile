@@ -12,7 +12,7 @@ import 'endpoints.dart';
 
 /// Handles all HTTP requests and manages authentication (access + refresh tokens).
 class ApiClient {
-  static const Duration _defaultTimeout = Duration(seconds: 10);
+  static const Duration _defaultTimeout = Duration(seconds: 30);
   final String _baseUrl = dotenv.env['BASE_URL']!;
 
   final TokenStorage _tokens;
