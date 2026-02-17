@@ -60,6 +60,10 @@ void main() {
         mockClient.post(any, any, timeout: anyNamed('timeout')),
       ).thenAnswer((_) async => ApiResult(success: true, statusCode: 200));
 
+      // Mock the put call that updates the last sync time at the end of _sendInBatches
+      when(
+        mockClient.put(any, any),
+      ).thenAnswer((_) async => ApiResult(success: true, statusCode: 200));
 
       final result = await sync.runSync();
 
