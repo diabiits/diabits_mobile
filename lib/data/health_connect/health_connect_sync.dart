@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:diabits_mobile/data/health_connect/health_connect_constants.dart';
 import 'package:diabits_mobile/data/network/endpoints.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +10,6 @@ import '../network/requests/health_connect_request.dart';
 import '../network/responses/last_sync_response.dart';
 import 'permission_handler.dart';
 
-/// A class responsible for syncing Health Connect data with the backend.
 class HealthConnectSync {
   final ApiClient _client;
   final PermissionHandler _permissionHandler;
@@ -17,8 +18,6 @@ class HealthConnectSync {
   HealthConnectSync({required ApiClient client, required PermissionHandler permissions})
     : _client = client,
       _permissionHandler = permissions;
-
-  DateTime? _syncTime;
 
   Future<bool> runSync() async {
     _health = await _permissionHandler.initHealthConnect();
@@ -55,8 +54,6 @@ class HealthConnectSync {
   }
 
   Future<List<HealthDataPoint>> _getHealthConnectData(DateTimeRange range) async {
-    _syncTime = range.end;
-
     final data = await _health.getHealthDataFromTypes(
       types: HealthConnectConstants.types,
       startTime: range.start,
@@ -71,20 +68,20 @@ class HealthConnectSync {
     if (data.isEmpty) return true;
 
     const int batchSize = 1000;
-    for (var i = 0; i < data.length; i += batchSize) {
-      final end = (i + batchSize < data.length) ? i + batchSize : data.length;
-      final chunk = data.sublist(i, end);
+    const timeout = Duration(minutes: 2);
 
-      final request = _convertToRequest(chunk);
+    for (var start = 0; start < data.length; start += batchSize) {
+      final end = math.min(start + batchSize, data.length);
+      final request = _convertToRequest(data.sublist(start, end));
 
       final result = await _client.post(
         Endpoints.healthConnect,
         request.toJson(),
-        timeout: const Duration(minutes: 5),
+        timeout: timeout,
       );
 
       if (!result.success) {
-        debugPrint("Failed to sync batch starting at index $i");
+        debugPrint("Failed to sync batch starting at index $start");
         return false;
       }
     }
@@ -106,7 +103,6 @@ class HealthConnectSync {
     }
 
     return HealthConnectRequest(
-      clientSyncTime: _syncTime!.toIso8601String(),
       workouts: workouts,
       numerics: numerics,
     );
