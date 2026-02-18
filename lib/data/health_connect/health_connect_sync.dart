@@ -20,6 +20,8 @@ class HealthConnectSync {
     : _client = client,
       _permissionHandler = permissions;
 
+  DateTime? _syncTime;
+
   Future<bool> runSync() async {
     _health = await _permissionHandler.initHealthConnect();
 
@@ -56,6 +58,7 @@ class HealthConnectSync {
 
   //TODO Get steps in hour increments?
   Future<List<HealthDataPoint>> _getHealthConnectData(DateTimeRange range) async {
+    _syncTime = range.end;
     final data = await _health.getHealthDataFromTypes(
       types: HealthConnectConstants.types,
       startTime: range.start,
