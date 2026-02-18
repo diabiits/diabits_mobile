@@ -90,7 +90,6 @@ class AuthStateManager extends ChangeNotifier {
     } else {
       _authState = AuthState.unauthenticated;
     }
-
     notifyListeners();
   }
 

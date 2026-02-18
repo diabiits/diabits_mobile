@@ -7,9 +7,6 @@ class AuthResponse {
   /// The JWT access token used for authenticating subsequent API requests.
   final String accessToken;
 
-  /// The expiration date and time of the access token.
-  final DateTime expiresAt;
-
   /// The refresh token used to obtain a new access token when the current one
   /// expires.
   final String refreshToken;
@@ -17,7 +14,6 @@ class AuthResponse {
   /// Creates a new instance of [AuthResponse].
   AuthResponse({
     required this.accessToken,
-    required this.expiresAt,
     required this.refreshToken,
   });
 
@@ -27,7 +23,6 @@ class AuthResponse {
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
       accessToken: json['accessToken'],
-      expiresAt: DateTime.parse(json['expiresAt']),
       refreshToken: json['refreshToken'],
     );
   }

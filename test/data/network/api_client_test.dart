@@ -83,7 +83,8 @@ void main() {
       ).called(1);
     });
 
-    test('broadcasts loginNeeded if refresh also returns 401', () async {
+    test('broadcasts loginNeeded if token refresh also returns 401', () async {
+      // Arrange
       when(mockTokens.getAccessToken()).thenAnswer((_) async => 'expired_token');
       when(mockTokens.getRefreshToken()).thenAnswer((_) async => 'expired_refresh');
 
@@ -95,16 +96,15 @@ void main() {
         mockHttpClient.post(any, headers: anyNamed('headers'), body: anyNamed('body')),
       ).thenAnswer((_) async => http.Response('Unauthorized', 401));
 
-      AuthEvent? capturedEvent;
-      final sub = authEvents.stream.listen((e) => capturedEvent = e);
+      final eventExpectation = expectLater(authEvents.stream, emits(AuthEvent.loginNeeded));
+
+      // Act
       final result = await apiClient.get('/test');
 
-      await pumpEventQueue();
-
+      // Assert
       expect(result.success, isFalse);
       expect(result.statusCode, 401);
-      expect(capturedEvent, AuthEvent.loginNeeded);
-      sub.cancel();
+      await eventExpectation;
     });
   });
 }

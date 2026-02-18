@@ -88,7 +88,7 @@ class ApiClient {
       debugPrint('Response body: ${response.body}');
     }
 
-    return ApiResult(
+    return  ApiResult(
       success: response.statusCode >= 200 && response.statusCode < 300,
       body: decodedBody,
       statusCode: response.statusCode,

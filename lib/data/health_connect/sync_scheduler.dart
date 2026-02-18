@@ -19,7 +19,7 @@ class SyncScheduler {
 
     await Workmanager().initialize(callbackDispatcher);
     //TODO Remove when done testing
-    //await Workmanager().registerOneOffTask("uniqueName", "taskName");
+    await Workmanager().registerOneOffTask("uniqueName", "taskName");
 
     await Workmanager().registerPeriodicTask(
       "dailyHealthSync",

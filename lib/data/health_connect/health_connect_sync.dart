@@ -40,8 +40,8 @@ class HealthConnectSync {
       final lastSync = LastSyncResponse.fromJson(result.body).lastSyncAt;
       start = _startOfDay(lastSync);
     } else if (result.statusCode == 404) {
-      final weekAgo = now.subtract(const Duration(days: 7));
-      start = _startOfDay(weekAgo);
+      final monthAgo = now.subtract(const Duration(days: 30));
+      start = _startOfDay(monthAgo);
     } else {
       return null;
     }
