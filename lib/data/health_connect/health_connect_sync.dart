@@ -10,6 +10,7 @@ import '../network/api_client.dart';
 import '../network/requests/health_connect_request.dart';
 import '../network/responses/last_sync_response.dart';
 import 'permission_handler.dart';
+//TODO Get steps in hour increments?
 
 class HealthConnectSync {
   final ApiClient _client;
@@ -56,7 +57,6 @@ class HealthConnectSync {
     return DateTimeRange(start: start, end: end);
   }
 
-  //TODO Get steps in hour increments?
   Future<List<HealthDataPoint>> _getHealthConnectData(DateTimeRange range) async {
     _syncTime = range.end;
     final data = await _health.getHealthDataFromTypes(

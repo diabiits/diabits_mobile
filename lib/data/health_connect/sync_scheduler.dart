@@ -38,8 +38,6 @@ class SyncScheduler {
     _initialized = false;
   }
 
-  /// Returns the duration until the next 06:00.
-  /// Having a fixed anchor point keeps the daily sync consistent.
   Duration _calculateInitialDelayFor6AM() {
     final now = DateTime.now();
     final sixAM = DateTime(now.year, now.month, now.day, 6);
