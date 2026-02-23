@@ -16,6 +16,7 @@ import 'data/network/api_client.dart';
 import 'domain/auth/auth_state_manager.dart';
 
 //TODO Documentation
+//TODO Add notes? Would have been interesting when there was the fire
 
 /// Entry point of the Diabits application.
 ///
