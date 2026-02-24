@@ -36,7 +36,7 @@ class AuthRepository {
       return AuthResult(true, null);
     }
 
-    return AuthResult(false, result.message);
+    return AuthResult(false, result.message?? result.body);
   }
 
   /// Logs in a user with the given credentials.
@@ -54,7 +54,7 @@ class AuthRepository {
       return AuthResult(true, null);
     }
 
-    return AuthResult(false, result.message);
+    return AuthResult(false, result.message ?? result.body);
   }
 
   /// Logs out the current user.

@@ -1,3 +1,4 @@
+import 'package:diabits_mobile/domain/auth/auth_state_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../shared/field_validators.dart';
@@ -175,6 +176,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: _emailController.text,
       inviteCode: _inviteCodeController.text,
     );
+
+    if (mounted && context.read<AuthStateManager>().authState == AuthState.authenticated) {
+      Navigator.of(context).pop();
+    }
   }
 
   /// Disposes the text editing controllers when the widget is removed from the tree.

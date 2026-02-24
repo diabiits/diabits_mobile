@@ -5,7 +5,6 @@ import 'package:diabits_mobile/data/network/api_client.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:workmanager/workmanager.dart';
 
-//TODO Test if sync is working/happening
 /// Controls registration of background sync tasks for Health Connect data.
 /// WorkManager runs tasks in a separate isolate, so the scheduler cannot use DI.
 class SyncScheduler {
@@ -13,11 +12,12 @@ class SyncScheduler {
 
   /// Starts background syncing by initializing WorkManager and registering periodic tasks.
   /// The daily sync is scheduled at 06:00 and syncs the previous days data.
-  /// This is done to give apps writing to Health Connect plenty of time to sync.
   Future<void> startBackgroundSync() async {
     if (_initialized) return;
 
     await Workmanager().initialize(callbackDispatcher);
+    //TODO Remove when done testing
+    await Workmanager().registerOneOffTask("uniqueName", "taskName");
 
     await Workmanager().registerPeriodicTask(
       "dailyHealthSync",
@@ -32,15 +32,12 @@ class SyncScheduler {
     _initialized = true;
   }
 
-  /// Stops all background sync tasks.
   /// Used when the user logs out or permissions change.
   Future<void> stopBackgroundSync() async {
     await Workmanager().cancelAll();
     _initialized = false;
   }
 
-  /// Returns the duration until the next 06:00.
-  /// Having a fixed anchor point keeps the daily sync consistent.
   Duration _calculateInitialDelayFor6AM() {
     final now = DateTime.now();
     final sixAM = DateTime(now.year, now.month, now.day, 6);

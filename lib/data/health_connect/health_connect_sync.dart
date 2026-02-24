@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:diabits_mobile/data/health_connect/health_connect_constants.dart';
 import 'package:diabits_mobile/data/network/endpoints.dart';
 import 'package:diabits_mobile/data/network/requests/last_sync_request.dart';
@@ -8,8 +10,8 @@ import '../network/api_client.dart';
 import '../network/requests/health_connect_request.dart';
 import '../network/responses/last_sync_response.dart';
 import 'permission_handler.dart';
+//TODO Get steps in hour increments?
 
-/// A class responsible for syncing Health Connect data with the backend.
 class HealthConnectSync {
   final ApiClient _client;
   final PermissionHandler _permissionHandler;
@@ -41,8 +43,8 @@ class HealthConnectSync {
       final lastSync = LastSyncResponse.fromJson(result.body).lastSyncAt;
       start = _startOfDay(lastSync);
     } else if (result.statusCode == 404) {
-      final weekAgo = now.subtract(const Duration(days: 7));
-      start = _startOfDay(weekAgo);
+      final monthAgo = now.subtract(const Duration(days: 30));
+      start = _startOfDay(monthAgo);
     } else {
       return null;
     }
@@ -55,10 +57,8 @@ class HealthConnectSync {
     return DateTimeRange(start: start, end: end);
   }
 
-  //TODO Get steps in hour increments?
   Future<List<HealthDataPoint>> _getHealthConnectData(DateTimeRange range) async {
     _syncTime = range.end;
-
     final data = await _health.getHealthDataFromTypes(
       types: HealthConnectConstants.types,
       startTime: range.start,
@@ -73,20 +73,20 @@ class HealthConnectSync {
     if (data.isEmpty) return true;
 
     const int batchSize = 1000;
-    for (var i = 0; i < data.length; i += batchSize) {
-      final end = (i + batchSize < data.length) ? i + batchSize : data.length;
-      final chunk = data.sublist(i, end);
+    const timeout = Duration(minutes: 2);
 
-      final request = _convertToRequest(chunk);
+    for (var start = 0; start < data.length; start += batchSize) {
+      final end = math.min(start + batchSize, data.length);
+      final request = _convertToRequest(data.sublist(start, end));
 
       final result = await _client.post(
         Endpoints.healthConnect,
         request.toJson(),
-        timeout: const Duration(minutes: 5),
+        timeout: timeout,
       );
 
       if (!result.success) {
-        debugPrint("Failed to sync batch starting at index $i");
+        debugPrint("Failed to sync batch starting at index $start");
         return false;
       }
     }
