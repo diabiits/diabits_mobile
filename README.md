@@ -1,16 +1,43 @@
-# diabits_mobile
+# Diabits Mobile App
 
-diabits mobile app
+Flutter Android app for low-stress collection of health data and manual inputs in the Diabits system.
 
-## Getting Started
+## Purpose
+Acts as the primary data source by combining automatic health metrics with manual inputs to support analysis of blood glucose level patterns.
 
-This project is a starting point for a Flutter application.
+- Collects data from Health Connect (glucose levels, sleep, heart rate, activity)
+- Captures contextual inputs (medication, menstrual cycle)
+- Syncs data to backend for storage and analysis
 
-A few resources to get you started if this is your first Flutter project:
+## Tech Stack
+- Flutter (Dart)
+- Health Connect
+- REST API (Diabits API)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Responsibilities
+- Retrieve health data from connected sources
+- Handle manual user input
+- Sync data with backend API
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Key Concepts
+
+### Automatic Data Collection
+- Uses Health Connect
+- Focus on objective, measurable data
+- Runs daily synchronization with retry and backoff
+- Minimizes manual effort
+
+### Manual Input
+- Adds contextual data not available through sensors
+- Synced to backend immediately
+- Full CRUD support
+
+## Features
+- Invite-based user registration and login
+- Manual data entry
+- Daily background data sync
+
+## Notes
+- Android only
+- Designed to minimize user effort and cognitive load
+- Part of a larger system with API and dashboard
